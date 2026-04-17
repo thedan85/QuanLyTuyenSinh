@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <property name="connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+        <property name="connection.url">jdbc:mysql://localhost:3306/xettuyen2026?useSSL=false&amp;serverTimezone=UTC</property>
+        <property name="connection.username">root</property> <property name="connection.password">123456</property> <property name="connection.pool_size">5</property>
+
+        <property name="dialect">org.hibernate.dialect.MySQL8Dialect</property>
+
+        <property name="show_sql">true</property>
+
+        <property name="current_session_context_class">thread</property>
+
+        <mapping class="com.example.entity.User"/>
+        <mapping class="com.example.entity.ToHopMon"/>
+        <mapping class="com.example.entity.Nganh"/>
+        <mapping class="com.example.entity.NganhToHop"/>
+        <mapping class="com.example.entity.ThiSinh"/>
+        <mapping class="com.example.entity.BangQuyDoi"/>
+        <mapping class="com.example.entity.DiemThi"/>
+        <mapping class="com.example.entity.DiemCong"/>
+        <mapping class="com.example.entity.NguyenVong"/>
+        
+    </session-factory>
+</hibernate-configuration>
