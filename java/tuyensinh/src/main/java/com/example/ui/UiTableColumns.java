@@ -21,6 +21,7 @@ import java.util.Objects;
 public final class UiTableColumns {
 
     private static final String KEY_SCROLL = "UiTableColumns.scroll";
+    private static final String KEY_CELL_PAD_SCALE = "UiTableTheme.cellPaddingScale";
     private static final int SAMPLE_ROWS = 50;
     /** Cộng vào độ rộng đo (tương ứng padding trái+phải ô trong {@link UiTableTheme}). */
     private static final int CELL_PAD = 28;
@@ -127,6 +128,8 @@ public final class UiTableColumns {
     }
 
     private static int measurePreferredColumnWidth(JTable table, int column, int maxRows) {
+        int padScale = getCellPadScale(table);
+        int pad = CELL_PAD * padScale;
         JTableHeader header = table.getTableHeader();
         TableColumn col = table.getColumnModel().getColumn(column);
         Object h = col.getHeaderValue();
@@ -137,16 +140,24 @@ public final class UiTableColumns {
         int w = MIN_COL;
         if (hr != null) {
             Component hc = hr.getTableCellRendererComponent(table, h, false, false, -1, column);
-            w = Math.max(w, hc.getPreferredSize().width + CELL_PAD);
+            w = Math.max(w, hc.getPreferredSize().width + pad);
         }
         int rows = Math.min(maxRows, table.getRowCount());
         for (int r = 0; r < rows; r++) {
             Object val = table.getValueAt(r, column);
             TableCellRenderer cellR = table.getCellRenderer(r, column);
             Component c = cellR.getTableCellRendererComponent(table, val, false, false, r, column);
-            w = Math.max(w, c.getPreferredSize().width + CELL_PAD);
+            w = Math.max(w, c.getPreferredSize().width + pad);
         }
         return Math.min(MAX_MEASURE, Math.max(MIN_COL, w));
+    }
+
+    private static int getCellPadScale(JTable table) {
+        Object s = table.getClientProperty(KEY_CELL_PAD_SCALE);
+        if (s instanceof Number n) {
+            return Math.max(1, n.intValue());
+        }
+        return 1;
     }
 
     private static void attachCellToolTips(JTable table) {

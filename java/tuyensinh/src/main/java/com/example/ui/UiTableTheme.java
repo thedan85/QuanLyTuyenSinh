@@ -26,6 +26,8 @@ public final class UiTableTheme {
     private static final Color ROW_HOVER = new Color(224, 242, 240);
 
     public static final String HOVER_ROW_KEY = "UiTableTheme.hoverRow";
+    /** Tùy chọn theo bảng: hệ số nhân padding ô dữ liệu (1 = mặc định). */
+    public static final String CELL_PADDING_SCALE_KEY = "UiTableTheme.cellPaddingScale";
     private static final String HOVER_ATTACHED = "UiTableTheme.hoverAttached";
 
     /** Padding nội dung ô (trên, trái, dưới, phải). */
@@ -52,7 +54,9 @@ public final class UiTableTheme {
         table.setShowHorizontalLines(true);
         table.setIntercellSpacing(new Dimension(0, 1));
         table.setGridColor(GRID);
-        table.setRowHeight(Math.max(table.getRowHeight(), 36));
+        int scale = getCellPaddingScale(table);
+        int minRow = Math.max(36, 16 + (CELL_PAD_TOP + CELL_PAD_BOTTOM) * scale);
+        table.setRowHeight(Math.max(table.getRowHeight(), minRow));
         table.setFillsViewportHeight(true);
 
         table.setFont(table.getFont().deriveFont(ADMIN_TABLE_FONT));
@@ -80,7 +84,12 @@ public final class UiTableTheme {
         if (!(c instanceof JComponent jc)) {
             return;
         }
-        jc.setBorder(new EmptyBorder(CELL_PAD_TOP, CELL_PAD_LEFT, CELL_PAD_BOTTOM, CELL_PAD_RIGHT));
+        int scale = getCellPaddingScale(table);
+        jc.setBorder(new EmptyBorder(
+                CELL_PAD_TOP * scale,
+                CELL_PAD_LEFT * scale,
+                CELL_PAD_BOTTOM * scale,
+                CELL_PAD_RIGHT * scale));
         jc.setOpaque(true);
         if (isSelected) {
             Color bg = table.getSelectionBackground();
@@ -109,6 +118,14 @@ public final class UiTableTheme {
             normalFg = DATA_FG;
         }
         jc.setForeground(normalFg);
+    }
+
+    private static int getCellPaddingScale(JTable table) {
+        Object v = table.getClientProperty(CELL_PADDING_SCALE_KEY);
+        if (v instanceof Number n) {
+            return Math.max(1, n.intValue());
+        }
+        return 1;
     }
 
     private static void installPaddedHeaderRenderer(JTableHeader header) {

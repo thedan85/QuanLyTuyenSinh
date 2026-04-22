@@ -4,6 +4,7 @@ import com.example.dao.NguyenVongDAO;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -21,6 +22,17 @@ public class TraCuuPanel extends JPanel {
     private DefaultTableModel tableModel;
     private NguyenVongDAO dao;
 
+    public static JLabel buildSearchTitleLabel() {
+        JLabel lblTitle = new JLabel("CỔNG TRA CỨU KẾT QUẢ TUYỂN SINH 2026", SwingConstants.CENTER);
+        Font base = UIManager.getFont("Label.font");
+        if (base == null) {
+            base = new Font("Segoe UI", Font.BOLD, 30);
+        }
+        lblTitle.setFont(base.deriveFont(Font.BOLD, 31f));
+        lblTitle.setForeground(new Color(241, 245, 249));
+        return lblTitle;
+    }
+
     public TraCuuPanel() {
         dao = new NguyenVongDAO();
         setLayout(new BorderLayout(15, 15));
@@ -28,11 +40,6 @@ public class TraCuuPanel extends JPanel {
 
         // --- 1. HEADER & THANH TÌM KIẾM ---
         JPanel topPanel = new JPanel(new BorderLayout(10, 10));
-        
-        JLabel lblTitle = new JLabel("CỔNG TRA CỨU KẾT QUẢ TUYỂN SINH 2026", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
-        lblTitle.setForeground(new Color(0, 102, 204));
-        topPanel.add(lblTitle, BorderLayout.NORTH);
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 14));
         txtSearch = new JTextField(15);
@@ -41,20 +48,30 @@ public class TraCuuPanel extends JPanel {
         Border fieldLine = BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true);
         txtSearch.setBorder(BorderFactory.createCompoundBorder(fieldLine, new EmptyBorder(11, 15, 11, 15)));
         btnTraCuu = new JButton("🔍 Tra cứu");
-        btnTraCuu.setFont(new Font("SansSerif", Font.BOLD, 16));
-        btnTraCuu.setBackground(new Color(0, 153, 51));
+        UiButtons.stylePrimary(btnTraCuu);
+        btnTraCuu.setFont(btnTraCuu.getFont().deriveFont(Font.BOLD, 16f));
 
         searchPanel.add(txtSearch);
         searchPanel.add(btnTraCuu);
         topPanel.add(searchPanel, BorderLayout.CENTER);
 
         // --- 2. THÔNG TIN THÍ SINH ---
-        JPanel infoPanel = new JPanel(new GridLayout(1, 3, 10, 10));
-        infoPanel.setBorder(new TitledBorder(" Thông tin Thí sinh "));
+        JPanel infoPanel = new JPanel(new GridLayout(1, 3, 24, 8));
+        TitledBorder infoBorder = new TitledBorder(" Thông tin Thí sinh ");
+        infoBorder.setTitleFont(new Font("Segoe UI", Font.BOLD, 16));
+        infoBorder.setTitleColor(new Color(71, 85, 105));
+        infoPanel.setBorder(new CompoundBorder(infoBorder, new EmptyBorder(10, 14, 10, 14)));
         lblHoTen = new JLabel("Họ tên: ");
         lblCccd = new JLabel("CCCD: ");
         lblSbd = new JLabel("SBD: ");
-        lblHoTen.setFont(new Font("SansSerif", Font.BOLD, 14));
+        Font infoFont = new Font("Segoe UI", Font.PLAIN, 18);
+        Color infoColor = new Color(30, 41, 59);
+        lblHoTen.setFont(infoFont);
+        lblCccd.setFont(infoFont);
+        lblSbd.setFont(infoFont);
+        lblHoTen.setForeground(infoColor);
+        lblCccd.setForeground(infoColor);
+        lblSbd.setForeground(infoColor);
         infoPanel.add(lblHoTen); infoPanel.add(lblCccd); infoPanel.add(lblSbd);
         topPanel.add(infoPanel, BorderLayout.SOUTH);
 
@@ -66,47 +83,10 @@ public class TraCuuPanel extends JPanel {
             @Override public boolean isCellEditable(int row, int column) { return false; }
         };
         table = new JTable(tableModel);
-        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
-        table.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        // Trang tra cứu: padding ô dữ liệu lớn hơn mặc định.
+        table.putClientProperty(UiTableTheme.CELL_PADDING_SCALE_KEY, 2);
         UiTableTheme.apply(table);
-
-        // Căn giữa cột Nguyện vọng và Tổ hợp
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(t, value, isSelected, hasFocus, row, column);
-                if (c instanceof JLabel jl) {
-                    jl.setHorizontalAlignment(JLabel.CENTER);
-                }
-                UiTableTheme.applyDataRowAppearance(t, c, row, isSelected);
-                return c;
-            }
-        };
-        table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
-
-        // Tô màu kết quả
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                UiTableTheme.applyDataRowAppearance(table, c, row, isSelected);
-                if (!isSelected) {
-                    if (column == 5 && value != null) {
-                        if (value.toString().contains("TRÚNG TUYỂN")) {
-                            c.setForeground(new Color(0, 150, 0)); c.setFont(c.getFont().deriveFont(Font.BOLD));
-                        } else if (value.toString().contains("Rớt")) {
-                            c.setForeground(Color.RED);
-                        } else {
-                            c.setForeground(Color.BLACK);
-                        }
-                    } else {
-                        c.setForeground(Color.BLACK);
-                    }
-                }
-                return c;
-            }
-        });
+        centerAllColumnsAndHighlightResult(table);
 
         tableScroll = new JScrollPane(table);
         UiTableColumns.install(table, tableScroll);
@@ -157,5 +137,34 @@ public class TraCuuPanel extends JPanel {
             }
         }
         UiTableColumns.refresh(table);
+    }
+
+    private static void centerAllColumnsAndHighlightResult(JTable table) {
+        int resultCol = table.getColumnCount() - 1;
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            final int col = i;
+            table.getColumnModel().getColumn(i).setCellRenderer(new DefaultTableCellRenderer() {
+                @Override
+                public Component getTableCellRendererComponent(JTable t, Object value, boolean isSelected,
+                        boolean hasFocus, int row, int column) {
+                    Component c = super.getTableCellRendererComponent(t, value, isSelected, hasFocus, row, column);
+                    if (c instanceof JLabel jl) {
+                        jl.setHorizontalAlignment(SwingConstants.CENTER);
+                    }
+                    UiTableTheme.applyDataRowAppearance(t, c, row, isSelected);
+                    if (!isSelected && col == resultCol && value != null) {
+                        String s = value.toString().toUpperCase();
+                        if (s.contains("TRÚNG TUYỂN")) {
+                            c.setForeground(new Color(22, 163, 74));
+                            c.setFont(c.getFont().deriveFont(Font.BOLD));
+                        } else if (s.contains("RỚT") || s.contains("ROT")) {
+                            c.setForeground(new Color(234, 88, 12));
+                            c.setFont(c.getFont().deriveFont(Font.BOLD));
+                        }
+                    }
+                    return c;
+                }
+            });
+        }
     }
 }

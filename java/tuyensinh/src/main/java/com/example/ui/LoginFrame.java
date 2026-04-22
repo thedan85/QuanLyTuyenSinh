@@ -115,7 +115,24 @@ public class LoginFrame extends JFrame {
             searchFrame.setSize(UiFrameDefaults.MAIN_SIZE);
             searchFrame.setMinimumSize(UiFrameDefaults.MAIN_MIN);
             searchFrame.setLocationRelativeTo(this);
-            searchFrame.add(new TraCuuPanel());
+            UiShellTheme.ShellGradientPanel searchRoot = new UiShellTheme.ShellGradientPanel(true);
+            searchRoot.setLayout(new BorderLayout());
+
+            JPanel wrapper = new JPanel(new BorderLayout());
+            wrapper.setOpaque(false);
+            wrapper.setBorder(new EmptyBorder(56, 56, 56, 56));
+
+            JLabel searchTitle = TraCuuPanel.buildSearchTitleLabel();
+            searchTitle.setBorder(new EmptyBorder(0, 0, 14, 0));
+            wrapper.add(searchTitle, BorderLayout.NORTH);
+
+            UiShellTheme.RoundedCardPanel searchCard = new UiShellTheme.RoundedCardPanel(new BorderLayout());
+            searchCard.setBorder(new EmptyBorder(18, 18, 18, 18));
+            searchCard.add(new TraCuuPanel(), BorderLayout.CENTER);
+            wrapper.add(searchCard, BorderLayout.CENTER);
+
+            searchRoot.add(wrapper, BorderLayout.CENTER);
+            searchFrame.setContentPane(searchRoot);
             searchFrame.setVisible(true);
         });
     }
