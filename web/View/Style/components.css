@@ -1,0 +1,122 @@
+/* small component styles */
+.brand-mark{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(140deg,#0f6db0,#23a59b);font-weight:800}
+
+/* Header / topbar */
+#site-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.6);backdrop-filter:blur(6px);border-bottom:1px solid rgba(20,74,115,0.04)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 0}
+.brand{display:flex;align-items:center;gap:12px}
+.brand strong{display:block;font-size:1.02rem}
+.brand small{display:block;color:var(--muted);font-size:0.86rem}
+.main-nav{display:flex;gap:8px;align-items:center}
+.main-nav a{padding:8px 12px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:700}
+.main-nav a:hover{color:#fff;background:linear-gradient(120deg,#0f6db0,#157ec8);box-shadow:0 8px 20px rgba(15,109,176,0.08)}
+.main-nav a.is-active{color:#fff;background:linear-gradient(120deg,#0f6db0,#157ec8);box-shadow:0 8px 20px rgba(15,109,176,0.08)}
+
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.student-chip{border-radius:999px;padding:6px 10px;background:#edf7ff;color:#0f6db0;font-weight:700;border:1px solid #c8deef}
+
+/* Buttons in header */
+#btn-open-login{padding:6px 10px;border-radius:10px;border:1px solid rgba(20,74,115,0.06);background:transparent}
+#btn-logout{padding:6px 10px;border-radius:10px;border:1px solid rgba(20,74,115,0.06)}
+
+/* Table & data */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th,.data-table td{padding:10px;border-bottom:1px solid #eef6fb}
+
+/* Cards & forms */
+.card{transition:none;}
+.card:hover{transform:none;box-shadow:0 10px 30px rgba(13,57,93,0.06)}
+
+.auth-card{max-width:520px;margin:48px auto 0 auto;padding:36px 36px 32px 36px;border-radius:18px;box-shadow:0 6px 32px rgba(13,57,93,0.07)}
+.auth-card h2 {
+	font-size:2.1rem;
+	font-weight:800;
+	color:#17324d;
+	margin-bottom:28px;
+	text-align:center;
+}
+.auth-card label {
+	font-weight:600;
+	color:#234;
+	margin-bottom:4px;
+}
+.auth-card input[type="text"],
+.auth-card input[type="password"] {
+	font-size:1.08rem;
+	padding:13px 14px;
+	margin-bottom:14px;
+}
+.auth-card .inline-actions {
+	margin-top:10px;
+}
+.auth-card .btn-primary {
+	min-width:110px;
+	font-weight:700;
+	background:linear-gradient(120deg,#0f6db0,#23a59b);
+	border:none;
+	box-shadow:0 2px 8px rgba(15,109,176,0.07);
+}
+/* ...existing code... */
+
+/* Login page enhancements */
+.login-card-enhanced {
+	background: linear-gradient(120deg,#f6fbff 60%,#e3f0fa 100%);
+	box-shadow: 0 8px 32px rgba(15,109,176,0.13);
+	border: 1.5px solid #e0eaf3;
+}
+.login-card-enhanced form label {
+	color: #0f6db0;
+}
+.login-card-enhanced input[type="text"],
+.login-card-enhanced input[type="password"] {
+	border: 1.5px solid #c8deef;
+	background: #fafdff;
+	transition: border 0.2s;
+}
+.login-card-enhanced input[type="text"]:focus,
+.login-card-enhanced input[type="password"]:focus {
+	border: 1.5px solid #23a59b;
+	outline: none;
+}
+.show-password-row {
+	display: flex;
+	align-items: center;
+	margin-bottom: 8px;
+	margin-top: -8px;
+	width: fit-content;
+	gap: 4px;
+	padding-left: 2px;
+}
+.show-password-label {
+	font-size: 1rem;
+	color: #0f6db0;
+	cursor: pointer;
+	user-select: none;
+	margin-bottom: 0;
+}
+.login-actions-centered {
+	justify-content: center !important;
+	display: flex !important;
+}
+
+.auth-card .result-area {
+	min-height:24px;
+	margin-top:18px;
+	text-align:center;
+}
+.lookup-card{max-width:880px;margin:40px auto;padding:28px;border-radius:16px}
+input,select,textarea{width:100%;border:1px solid #e1eff6;border-radius:8px;padding:10px 12px;background:#fff;outline:none}
+input:focus,select:focus,textarea:focus{box-shadow:0 6px 18px rgba(15,109,176,0.06);border-color:#3f8fc4}
+
+/* Quick lookup result styles */
+.quick-result{padding:14px;background:#fff;border-radius:12px;border:1px solid #e8f2fb}
+.quick-result h3{margin:0 0 8px 0}
+.result-list{list-style:none;padding-left:0;margin:8px 0}
+.result-item.not-found{color:#c33;font-weight:700}
+.result-block{margin-top:6px}
+.result-sub{margin-top:8px}
+.result-sub strong{display:block;color:#0f6db0;margin-bottom:6px}
+.result-sublist{padding-left:18px;margin:6px 0}
+.result-sublist li{margin-bottom:6px}
+
+.muted{color:var(--muted)}

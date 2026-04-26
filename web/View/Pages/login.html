@@ -1,0 +1,24 @@
+<section class="page page-login">
+  <div class="container">
+    <div class="card auth-card login-card-enhanced">
+      <h2>Đăng nhập thí sinh</h2>
+      <form id="student-login-form" class="form-grid" novalidate>
+        <label for="login-cccd">CCCD</label>
+        <input id="login-cccd" name="cccd" type="text" maxlength="12" placeholder="Nhập số CCCD" />
+
+        <label for="login-password">Mật khẩu</label>
+        <input id="login-password" name="password" type="password" placeholder="Nhập mật khẩu" />
+        <div class="show-password-row">
+          <input type="checkbox" id="show-password-toggle" style="margin-right:7px; width:18px; height:18px; accent-color:#0f6db0;" />
+          <label for="show-password-toggle" class="show-password-label">Hiện mật khẩu</label>
+        </div>
+
+        <div class="inline-actions login-actions-centered">
+          <button id="btn-login" class="btn btn-primary" style="margin:0 auto;display:block;min-width:140px;">Đăng nhập</button>
+        </div>
+      </form>
+
+      <div id="login-feedback" class="result-area muted"></div>
+    </div>
+  </div>
+</section>
