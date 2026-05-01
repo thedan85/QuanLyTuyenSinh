@@ -1,0 +1,78 @@
+/* Login */
+.auth-section {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-intro .lead {
+  max-width: 520px;
+}
+
+.feature-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.feature-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.feature-text {
+  color: var(--ink-500);
+  margin: 0;
+}
+
+/* Page header */
+.page-section {
+  position: relative;
+  z-index: 1;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary-strong);
+  font-weight: 700;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Score inputs */
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 991px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .auth-intro {
+    text-align: left;
+  }
+}

@@ -1,24 +1,56 @@
-<section class="page page-login">
-  <div class="container">
-    <div class="card auth-card login-card-enhanced">
-      <h2>Đăng nhập thí sinh</h2>
-      <form id="student-login-form" class="form-grid" novalidate>
-        <label for="login-cccd">CCCD</label>
-        <input id="login-cccd" name="cccd" type="text" maxlength="12" placeholder="Nhập số CCCD" />
-
-        <label for="login-password">Mật khẩu</label>
-        <input id="login-password" name="password" type="password" placeholder="Nhập mật khẩu" />
-        <div class="show-password-row">
-          <input type="checkbox" id="show-password-toggle" style="margin-right:7px; width:18px; height:18px; accent-color:#0f6db0;" />
-          <label for="show-password-toggle" class="show-password-label">Hiện mật khẩu</label>
+<section class="auth-section">
+    <div class="container py-5">
+        <div class="row align-items-center min-vh-100 gy-4">
+        <div class="col-lg-6">
+            <div class="auth-intro">
+              <span class="badge badge-soft">Tuyển sinh 2026</span>
+              <h1 class="display-5 mt-3">Tra cứu kết quả và công cụ tính điểm</h1>
+              <p class="lead text-muted">Hệ thống dành cho thí sinh. Dữ liệu được cập nhật từ phòng đào tạo.</p>
+            <div class="feature-grid mt-4">
+                <div class="feature-card">
+                  <div class="feature-title">Tra cứu nhanh</div>
+                  <p class="feature-text">Xem ngay kết quả trúng tuyển theo từng nguyện vọng.</p>
+                </div>
+                <div class="feature-card">
+                  <div class="feature-title">Tính điểm chuẩn</div>
+                  <p class="feature-text">Mô phỏng điểm xét tuyển theo DGNL, VSAT hoặc THPT.</p>
+                </div>
+                <div class="feature-card">
+                  <div class="feature-title">Mở rộng linh hoạt</div>
+                  <p class="feature-text">Cấu trúc SPA dễ dàng tích hợp API trong tương lai.</p>
+                </div>
+            </div>
+            </div>
         </div>
-
-        <div class="inline-actions login-actions-centered">
-          <button id="btn-login" class="btn btn-primary" style="margin:0 auto;display:block;min-width:140px;">Đăng nhập</button>
+        <div class="col-lg-5 offset-lg-1">
+            <div class="card auth-card shadow-lg">
+            <div class="card-body p-4 p-lg-5">
+                <h2 class="h4 mb-2">Đăng nhập</h2>
+                <p class="text-muted mb-4">Nhập CCCD và ngày sinh theo định dạng dd/mm/yyyy</p>
+                <div data-slot="alert"></div>
+                <form id="loginForm" class="vstack gap-3" novalidate>
+                <div class="form-field">
+                    <label class="form-label" for="cccd">CCCD</label>
+                    <input class="form-control" id="cccd" name="cccd" type="text" inputmode="numeric" placeholder="12 chữ số" maxlength="12" autocomplete="username" required>
+                    <div class="form-text" data-error-for="cccd"></div>
+                </div>
+                <div class="form-field">
+                    <label class="form-label" for="dob">Ngày sinh</label>
+                    <input class="form-control" id="dob" name="dob" type="password" inputmode="numeric" placeholder="ddmmyyyy" maxlength="8" autocomplete="current-password" required>
+                    <div class="form-text" data-error-for="dob"></div>
+                </div>
+                <button class="btn btn-primary w-100" type="submit" id="loginSubmit">
+                    <span class="btn-label">Đăng nhập</span>
+                    <span class="spinner-border spinner-border-sm ms-2 d-none" aria-hidden="true" id="loginSpinner"></span>
+                </button>
+                  <div class="text-center small text-muted">Bạn quên thông tin? Liên hệ phòng đào tạo.</div>
+                </form>
+            </div>
+            </div>
+            <div class="note-card mt-3">
+              <strong>Lưu ý:</strong> Mật khẩu mặc định là 8 chữ số ngày sinh.
+            </div>
         </div>
-      </form>
-
-      <div id="login-feedback" class="result-area muted"></div>
+        </div>
     </div>
-  </div>
 </section>

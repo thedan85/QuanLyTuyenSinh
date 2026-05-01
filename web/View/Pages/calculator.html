@@ -1,0 +1,199 @@
+<section class="page-section">
+    <div class="container">
+        <div class="page-header">
+        <div>
+            <span class="eyebrow">Công cụ tính điểm</span>
+            <h1 class="h3 mb-2">Tính điểm xét tuyển</h1>
+            <p class="text-muted">Nhập dữ liệu và so sánh với điểm sàn, điểm trúng tuyển.</p>
+        </div>
+        <div class="header-actions">
+            <a class="btn btn-outline-primary btn-sm" href="#/ket-qua">Quay về kết quả</a>
+        </div>
+        </div>
+
+        <div class="card tabbed-card">
+        <div class="card-header">
+            <ul class="nav nav-tabs" id="calcTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-dgnl-btn" data-bs-toggle="tab" data-bs-target="#tab-dgnl" type="button" role="tab">DGNL</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-thpt-btn" data-bs-toggle="tab" data-bs-target="#tab-thpt" type="button" role="tab">VSAT / THPT</button>
+            </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+            <div class="tab-pane fade show active" id="tab-dgnl" role="tabpanel">
+                <div class="row g-4">
+                <div class="col-lg-6">
+                    <form id="dgnlForm" class="vstack gap-3">
+                    <div class="form-field">
+                        <label class="form-label" for="dgnlScore">Điểm DGNL (0 - 1200)</label>
+                        <input class="form-control" type="number" id="dgnlScore" min="0" max="1200" step="1" placeholder="Nhập điểm">
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="dgnlMajor">Chọn ngành</label>
+                        <select class="form-select" id="dgnlMajor"></select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                          <label class="form-label" for="dgnlGroup">Đối tượng ưu tiên</label>
+                        <select class="form-select" id="dgnlGroup"></select>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label" for="dgnlRegion">Khu vực ưu tiên</label>
+                        <select class="form-select" id="dgnlRegion"></select>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="dgnlBonus">Điểm cộng (nếu có)</label>
+                        <input class="form-control" type="number" id="dgnlBonus" min="0" max="10" step="0.25" placeholder="0.00">
+                        <div class="form-text">VD: chứng chỉ ngoại ngữ, giải thưởng, ...</div>
+                    </div>
+                      <button class="btn btn-outline-primary" type="button" id="dgnlInfoBtn" data-bs-toggle="modal" data-bs-target="#priorityModal">Cách tính ưu tiên</button>
+                    </form>
+                </div>
+                <div class="col-lg-6">
+                    <div class="result-panel">
+                      <div class="panel-title">Kết quả DGNL</div>
+                    <div class="result-metrics">
+                        <div class="metric">
+                          <span>Điểm quy đổi</span>
+                        <strong data-field="dgnlConverted">-</strong>
+                        </div>
+                        <div class="metric">
+                          <span>Tổ hợp gốc</span>
+                        <strong data-field="dgnlToHop">-</strong>
+                        </div>
+                        <div class="metric">
+                          <span>Điểm ưu tiên</span>
+                        <strong data-field="dgnlPriority">-</strong>
+                        </div>
+                        <div class="metric">
+                          <span>Tổng điểm</span>
+                        <strong data-field="dgnlFinal">-</strong>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="result-checklist">
+                        <div class="check-item">
+                          <span>So với điểm sàn</span>
+                        <strong data-field="dgnlVsDiemSan">-</strong>
+                        </div>
+                        <div class="check-item">
+                          <span>So với điểm trúng tuyển</span>
+                        <strong data-field="dgnlVsDiemTrungTuyen">-</strong>
+                        </div>
+                    </div>
+                      <div class="result-note" data-field="dgnlNote">Nhập thông tin để xem kết quả.</div>
+                    </div>
+                </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="tab-thpt" role="tabpanel">
+                <div class="row g-4">
+                <div class="col-lg-6">
+                    <form id="thptForm" class="vstack gap-3">
+                    <div class="form-field">
+                        <label class="form-label">Chế độ</label>
+                        <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="thptMode" id="modeThpt" value="THPT" checked>
+                        <label class="btn btn-outline-primary" for="modeThpt">THPT (thang 10)</label>
+                        <input type="radio" class="btn-check" name="thptMode" id="modeVsat" value="VSAT">
+                        <label class="btn btn-outline-primary" for="modeVsat">VSAT (thang 150)</label>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="thptMajor">Chọn ngành</label>
+                        <select class="form-select" id="thptMajor"></select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                          <label class="form-label" for="thptGroup">Đối tượng ưu tiên</label>
+                        <select class="form-select" id="thptGroup"></select>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label" for="thptRegion">Khu vực ưu tiên</label>
+                        <select class="form-select" id="thptRegion"></select>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                          <label class="form-label" for="thptBonusSubject">Môn được cộng điểm</label>
+                        <select class="form-select" id="thptBonusSubject"></select>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label" for="thptBonus">Điểm cộng</label>
+                        <input class="form-control" type="number" id="thptBonus" min="0" max="3" step="0.25" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="score-grid">
+                        <div class="form-field">
+                          <label class="form-label" for="scoreTo">Toán</label>
+                        <input class="form-control" type="number" id="scoreTo" min="0" max="150" step="0.25" data-subject="TO">
+                        </div>
+                        <div class="form-field">
+                          <label class="form-label" for="scoreLi">Lý</label>
+                        <input class="form-control" type="number" id="scoreLi" min="0" max="150" step="0.25" data-subject="LI">
+                        </div>
+                        <div class="form-field">
+                          <label class="form-label" for="scoreHo">Hóa</label>
+                        <input class="form-control" type="number" id="scoreHo" min="0" max="150" step="0.25" data-subject="HO">
+                        </div>
+                        <div class="form-field">
+                        <label class="form-label" for="scoreSi">Sinh</label>
+                        <input class="form-control" type="number" id="scoreSi" min="0" max="150" step="0.25" data-subject="SI">
+                        </div>
+                        <div class="form-field">
+                          <label class="form-label" for="scoreSu">Sử</label>
+                        <input class="form-control" type="number" id="scoreSu" min="0" max="150" step="0.25" data-subject="SU">
+                        </div>
+                        <div class="form-field">
+                          <label class="form-label" for="scoreDi">Địa</label>
+                        <input class="form-control" type="number" id="scoreDi" min="0" max="150" step="0.25" data-subject="DI">
+                        </div>
+                        <div class="form-field">
+                          <label class="form-label" for="scoreVa">Văn</label>
+                        <input class="form-control" type="number" id="scoreVa" min="0" max="150" step="0.25" data-subject="VA">
+                        </div>
+                        <div class="form-field">
+                          <label class="form-label" for="scoreAnh">Anh thi</label>
+                        <input class="form-control" type="number" id="scoreAnh" min="0" max="150" step="0.25" data-subject="N1_THI">
+                        </div>
+                        <div class="form-field">
+                          <label class="form-label" for="scoreAnhQD">Anh quy đổi</label>
+                        <input class="form-control" type="number" id="scoreAnhQD" min="0" max="150" step="0.25" data-subject="N1_QD">
+                        </div>
+                    </div>
+                      <div class="form-text" id="thptNote">Nếu là VSAT, hệ thống sẽ quy đổi về thang 10.</div>
+                    </form>
+                </div>
+                <div class="col-lg-6">
+                    <div class="result-panel">
+                      <div class="panel-title">Kết quả VSAT / THPT</div>
+                      <div class="result-note" id="thptConvertedSummary">Nhập điểm để xem quy đổi.</div>
+                    <div class="divider"></div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle result-table">
+                        <thead>
+                            <tr>
+                              <th>Tổ hợp</th>
+                              <th>Điểm tổ hợp</th>
+                              <th>Ưu tiên</th>
+                              <th>Tổng</th>
+                              <th>So với điểm sàn</th>
+                            </tr>
+                        </thead>
+                        <tbody id="thptTableBody"></tbody>
+                        </table>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</section>

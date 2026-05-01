@@ -1,7 +1,7 @@
 SV thực hiện Spring MVC làm ứng dụng cho thí sinh
 1.  Tra cứu kết quả xét tuyển
 Thí sinh nhập username là số căn cước công dân, pass là 08 chữ số của ngày sinh,
-tháng sinh, năm sinh. Kết quả:
+tháng sinh, năm sinh. Sau khi đăng nhập, hiện Kết quả:
 - Không tìm thấy
 - Tìm thấy:
     o Trúng tuyển ngành, điểm, tổ hợp, phương thức.

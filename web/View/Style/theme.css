@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap");
+
+:root {
+  --font-heading: "Sora", sans-serif;
+  --font-body: "Manrope", sans-serif;
+
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-300: #93c5fd;
+  --blue-400: #7aa6f6;
+  --blue-500: #4a7bd6;
+  --blue-600: #315fbf;
+
+  --ink-900: #0f1c2e;
+  --ink-700: #1f2f46;
+  --ink-500: #3a516f;
+
+  --bg: #f7fbff;
+  --surface: #ffffff;
+  --surface-soft: #f1f6ff;
+  --border-soft: rgba(53, 88, 143, 0.12);
+
+  --primary: var(--blue-500);
+  --primary-strong: var(--blue-600);
+  --primary-soft: var(--blue-100);
+
+  --success: #1f9d55;
+  --warning: #d97706;
+  --danger: #dc2626;
+
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --shadow-soft: 0 16px 40px rgba(15, 28, 46, 0.12);
+  --shadow-card: 0 12px 30px rgba(15, 28, 46, 0.1);
+
+  --transition-fast: 150ms ease;
+  --transition-medium: 320ms ease;
+}
+
+body[data-theme="sky"] {
+  --bg: #f7fbff;
+  --surface: #ffffff;
+  --primary: #4a7bd6;
+}
+
+body[data-theme="sea"] {
+  --bg: #f1f8ff;
+  --surface: #fefeff;
+  --primary: #3b6fc0;
+  --primary-strong: #2f5aa6;
+  --primary-soft: #dbeafe;
+}
