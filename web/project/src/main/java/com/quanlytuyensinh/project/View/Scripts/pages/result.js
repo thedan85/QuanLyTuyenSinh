@@ -12,7 +12,35 @@ export async function initResultPage() {
   }
 
   const candidate = state.session;
-  const view = buildResultView(candidate.cccd);
+  const summarySlot = qs('[data-slot="result-summary"]');
+  const emptySlot = qs('[data-slot="result-empty"]');
+  const tableBody = qs("#nvTableBody");
+
+  if (summarySlot) {
+    summarySlot.innerHTML = await renderComponent("loading", {
+      message: "Đang tải dữ liệu...",
+    });
+  }
+  if (emptySlot) {
+    emptySlot.innerHTML = "";
+  }
+  if (tableBody) {
+    tableBody.innerHTML = "";
+  }
+
+  let view;
+  try {
+    view = await buildResultView(candidate.cccd);
+  } catch (error) {
+    if (summarySlot) {
+      summarySlot.innerHTML = await renderComponent("alert", {
+        type: "danger",
+        title: "Không thể tải dữ liệu",
+        message: "Vui lòng thử lại sau hoặc liên hệ phòng đào tạo.",
+      });
+    }
+    return;
+  }
 
   setText(qs('[data-field="fullName"]'), formatFullName(candidate.ho, candidate.ten));
   setText(qs('[data-field="cccd"]'), candidate.cccd || "-");
@@ -26,18 +54,8 @@ export async function initResultPage() {
   const priorityPoints = getPriorityPoints(candidate.doiTuong, candidate.khuVuc);
   setText(qs('[data-field="diemUuTien"]'), formatScore(priorityPoints, 2));
 
-  const summarySlot = qs('[data-slot="result-summary"]');
-  const emptySlot = qs('[data-slot="result-empty"]');
-  const tableBody = qs("#nvTableBody");
-
   if (summarySlot) {
     summarySlot.innerHTML = "";
-  }
-  if (emptySlot) {
-    emptySlot.innerHTML = "";
-  }
-  if (tableBody) {
-    tableBody.innerHTML = "";
   }
 
   if (view.status === "NOT_FOUND") {

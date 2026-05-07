@@ -78,21 +78,32 @@ export async function initLoginPage() {
     setLoading(true);
     await new Promise((resolve) => setTimeout(resolve, LOADING_DELAY));
 
-    const candidate = authenticate(cccdValue, dobValue);
-    if (!candidate) {
+    try {
+      const candidate = await authenticate(cccdValue, dobValue);
+      if (!candidate) {
+        if (alertSlot) {
+          alertSlot.innerHTML = await renderComponent("alert", {
+            type: "danger",
+            title: "Đăng nhập thất bại",
+            message: "Không tìm thấy thông tin hoặc mật khẩu không đúng.",
+          });
+        }
+        setLoading(false);
+        return;
+      }
+
+      store.setState({ session: candidate });
+      setLoading(false);
+      navigate("#/ket-qua");
+    } catch (error) {
       if (alertSlot) {
         alertSlot.innerHTML = await renderComponent("alert", {
           type: "danger",
-          title: "Đăng nhập thất bại",
-          message: "Không tìm thấy thông tin hoặc mật khẩu không đúng.",
+          title: "Không thể kết nối",
+          message: "Vui lòng kiểm tra lại hệ thống và thử lại sau.",
         });
       }
       setLoading(false);
-      return;
     }
-
-    store.setState({ session: candidate });
-    setLoading(false);
-    navigate("#/ket-qua");
   });
 }

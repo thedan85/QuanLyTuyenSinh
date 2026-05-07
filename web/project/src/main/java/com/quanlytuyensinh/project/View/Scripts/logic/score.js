@@ -1,9 +1,7 @@
 import { SCORE_LIMITS, PRIORITY_GROUPS, REGIONS } from "../data/constants.js";
-import { majors, nganhToHop, bangQuyDoi } from "../data/mock-data.js";
 
 const groupMap = new Map(PRIORITY_GROUPS.map((group) => [group.value, group]));
 const regionMap = new Map(REGIONS.map((region) => [region.value, region]));
-const majorMap = new Map(majors.map((major) => [major.maNganh, major]));
 
 const ROUND_DIGITS = 2;
 
@@ -32,16 +30,18 @@ export function adjustPriorityPoints(baseScore, utGoc) {
   return round(utGoc, 2) || 0;
 }
 
-export function convertDgnlScore(rawScore, toHop) {
+export function convertDgnlScore(rawScore, toHop, ranges = []) {
   if (rawScore === null || rawScore === undefined || Number.isNaN(rawScore)) {
     return null;
   }
 
-  const ranges = bangQuyDoi.filter(
-    (row) => row.phuongThuc === "DGNL" && row.toHop === toHop
+  const match = ranges.find(
+    (row) =>
+      row.phuongThuc === "DGNL" &&
+      row.toHop === toHop &&
+      rawScore >= row.diemA &&
+      rawScore <= row.diemB
   );
-
-  const match = ranges.find((row) => rawScore >= row.diemA && rawScore <= row.diemB);
 
   if (match) {
     const span = match.diemB - match.diemA;
@@ -56,17 +56,18 @@ export function convertDgnlScore(rawScore, toHop) {
 
 export function calculateDgnlResult({
   rawScore,
-  majorCode,
+  major,
   groupValue,
   regionValue,
   bonusPoints,
+  bangQuyDoi,
 }) {
-  const major = majorMap.get(majorCode);
   if (!major || rawScore === null || rawScore === undefined || Number.isNaN(rawScore)) {
     return null;
   }
 
-  const convertedScore = convertDgnlScore(rawScore, major.toHopGoc);
+  const toHop = major.toHopGoc || "";
+  const convertedScore = convertDgnlScore(rawScore, toHop, bangQuyDoi || []);
   const baseScore = round((convertedScore || 0) + (bonusPoints || 0), 2) || 0;
   const utGoc = getPriorityPoints(groupValue, regionValue);
   const utAdjusted = adjustPriorityPoints(baseScore, utGoc);
@@ -74,7 +75,7 @@ export function calculateDgnlResult({
 
   return {
     convertedScore,
-    toHop: major.toHopGoc,
+    toHop,
     baseScore,
     utGoc,
     utAdjusted,
@@ -86,17 +87,16 @@ export function calculateDgnlResult({
 
 export function calculateThptResults({
   subjectScores,
-  majorCode,
+  major,
   groupValue,
   regionValue,
   bonusPoints,
+  combos,
 }) {
-  const major = majorMap.get(majorCode);
-  if (!major) {
+  if (!major || !Array.isArray(combos) || combos.length === 0) {
     return [];
   }
 
-  const combos = nganhToHop.filter((combo) => combo.maNganh === majorCode);
   const utGoc = getPriorityPoints(groupValue, regionValue);
 
   return combos.map((combo) => {

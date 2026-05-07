@@ -1,4 +1,3 @@
-import { majors, toHopMon } from "../data/mock-data.js";
 import {
   PRIORITY_GROUPS,
   REGIONS,
@@ -6,14 +5,29 @@ import {
   SUBJECT_LIST,
   SCORE_LIMITS,
 } from "../data/constants.js";
+import {
+  getMajors,
+  getMajorMap,
+  getToHopMap,
+  getNganhToHopByMaNganh,
+  getBangQuyDoiByToHop,
+} from "../data/reference.js";
 import { calculateDgnlResult, calculateThptResults } from "../logic/score.js";
 import { formatScore } from "../utils/format.js";
-import { qs, qsa, setText } from "../utils/dom.js";
+import { qs, setText } from "../utils/dom.js";
 import { renderComponent } from "../ui/components.js";
 
-const toHopMap = new Map(toHopMon.map((item) => [item.maToHop, item]));
+const state = {
+  majors: [],
+  majorMap: new Map(),
+  toHopMap: new Map(),
+};
+
+let dgnlRequestId = 0;
+let thptRequestId = 0;
 
 export async function initCalculatorPage() {
+  const container = qs(".page-section .container");
   const dgnlMajor = qs("#dgnlMajor");
   const thptMajor = qs("#thptMajor");
   const dgnlGroup = qs("#dgnlGroup");
@@ -34,8 +48,26 @@ export async function initCalculatorPage() {
     });
   }
 
-  populateSelect(dgnlMajor, majors, (item) => `${item.maNganh} - ${item.tenNganh}`);
-  populateSelect(thptMajor, majors, (item) => `${item.maNganh} - ${item.tenNganh}`);
+  try {
+    state.majors = await getMajors();
+    state.majorMap = await getMajorMap();
+    state.toHopMap = await getToHopMap();
+  } catch (error) {
+    if (container) {
+      const alertWrapper = document.createElement("div");
+      alertWrapper.className = "mb-3";
+      alertWrapper.innerHTML = await renderComponent("alert", {
+        type: "danger",
+        title: "Không thể tải dữ liệu",
+        message: "Vui lòng thử lại sau hoặc liên hệ phòng đào tạo.",
+      });
+      container.prepend(alertWrapper);
+    }
+    return;
+  }
+
+  populateSelect(dgnlMajor, state.majors, (item) => `${item.maNganh} - ${item.tenNganh}`);
+  populateSelect(thptMajor, state.majors, (item) => `${item.maNganh} - ${item.tenNganh}`);
   populateSelect(dgnlGroup, PRIORITY_GROUPS, (item) => item.label);
   populateSelect(thptGroup, PRIORITY_GROUPS, (item) => item.label);
   populateSelect(dgnlRegion, REGIONS, (item) => item.label);
@@ -76,8 +108,8 @@ function bindDgnlEvents() {
   if (!form) {
     return;
   }
-  form.addEventListener("input", updateDgnl);
-  form.addEventListener("change", updateDgnl);
+  form.addEventListener("input", () => void updateDgnl());
+  form.addEventListener("change", () => void updateDgnl());
 }
 
 function bindThptEvents() {
@@ -85,8 +117,8 @@ function bindThptEvents() {
   if (!form) {
     return;
   }
-  form.addEventListener("input", updateThpt);
-  form.addEventListener("change", updateThpt);
+  form.addEventListener("input", () => void updateThpt());
+  form.addEventListener("change", () => void updateThpt());
 }
 
 function readNumber(value) {
@@ -97,28 +129,41 @@ function readNumber(value) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function updateDgnl() {
+async function updateDgnl() {
+  const currentRequest = ++dgnlRequestId;
   const rawScore = readNumber(qs("#dgnlScore")?.value);
   const majorCode = qs("#dgnlMajor")?.value || "";
   const groupValue = qs("#dgnlGroup")?.value || "";
   const regionValue = qs("#dgnlRegion")?.value || "";
   const bonusPoints = readNumber(qs("#dgnlBonus")?.value) || 0;
 
-  const result = calculateDgnlResult({
-    rawScore,
-    majorCode,
-    groupValue,
-    regionValue,
-    bonusPoints,
-  });
-
-  if (!result) {
+  const major = state.majorMap.get(majorCode);
+  if (!major || rawScore === null) {
     setText(qs('[data-field="dgnlConverted"]'), "-");
     setText(qs('[data-field="dgnlToHop"]'), "-");
     setText(qs('[data-field="dgnlPriority"]'), "-");
     setText(qs('[data-field="dgnlFinal"]'), "-");
     setText(qs('[data-field="dgnlVsDiemSan"]'), "-");
     setText(qs('[data-field="dgnlVsDiemTrungTuyen"]'), "-");
+    setText(qs('[data-field="dgnlNote"]'), "Nhập thông tin để xem kết quả.");
+    return;
+  }
+
+  const bangQuyDoi = await getBangQuyDoiByToHop(major.toHopGoc);
+  if (currentRequest !== dgnlRequestId) {
+    return;
+  }
+
+  const result = calculateDgnlResult({
+    rawScore,
+    major,
+    groupValue,
+    regionValue,
+    bonusPoints,
+    bangQuyDoi,
+  });
+
+  if (!result) {
     setText(qs('[data-field="dgnlNote"]'), "Nhập thông tin để xem kết quả.");
     return;
   }
@@ -149,7 +194,8 @@ function updateDgnl() {
   setText(qs('[data-field="dgnlNote"]'), "Điểm quy đổi đã bao gồm điểm cộng và ưu tiên điều chỉnh.");
 }
 
-function updateThpt() {
+async function updateThpt() {
+  const currentRequest = ++thptRequestId;
   const majorCode = qs("#thptMajor")?.value || "";
   const groupValue = qs("#thptGroup")?.value || "";
   const regionValue = qs("#thptRegion")?.value || "";
@@ -167,16 +213,28 @@ function updateThpt() {
   }
 
   const subjectScores = collectSubjectScores(scaleDivider);
+  updateConvertedSummary(mode, subjectScores);
+
+  if (!majorCode) {
+    renderThptTable([]);
+    return;
+  }
+
+  const major = state.majorMap.get(majorCode);
+  const combos = await getNganhToHopByMaNganh(majorCode);
+  if (currentRequest !== thptRequestId) {
+    return;
+  }
 
   const results = calculateThptResults({
     subjectScores,
-    majorCode,
+    major,
     groupValue,
     regionValue,
     bonusPoints,
+    combos,
   });
 
-  updateConvertedSummary(mode, subjectScores, scaleDivider);
   renderThptTable(results);
 }
 
@@ -216,7 +274,7 @@ function collectSubjectScores(scaleDivider) {
   return scores;
 }
 
-function updateConvertedSummary(mode, subjectScores, scaleDivider) {
+function updateConvertedSummary(mode, subjectScores) {
   const summary = qs("#thptConvertedSummary");
   if (!summary) {
     return;
@@ -253,7 +311,7 @@ function renderThptTable(results) {
 
   tableBody.innerHTML = results
     .map((item) => {
-      const tohop = toHopMap.get(item.combo.maToHop);
+      const tohop = state.toHopMap.get(item.combo.maToHop);
       const tohopLabel = tohop ? tohop.tenToHop : item.combo.maToHop;
       const baseScore = item.baseScore !== null ? formatScore(item.baseScore, 2) : "-";
       const utScore = item.utAdjusted !== null ? formatScore(item.utAdjusted, 2) : "-";

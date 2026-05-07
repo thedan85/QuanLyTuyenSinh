@@ -1,8 +1,8 @@
-import { candidates } from "../data/mock-data.js";
+import { api } from "../api/client.js";
 import { normalizeDobToKey } from "../utils/format.js";
 
-export function authenticate(cccd, dobInput) {
-  const candidate = candidates.find((item) => item.cccd === cccd);
+export async function authenticate(cccd, dobInput) {
+  const candidate = await api.getThiSinhByCccd(cccd);
   if (!candidate) {
     return null;
   }
