@@ -203,6 +203,13 @@ CREATE TABLE `xt_nganh_tohop` (
 LOCK TABLES `xt_nganh_tohop` WRITE;
 /*!40000 ALTER TABLE `xt_nganh_tohop` DISABLE KEYS */;
 INSERT INTO `xt_nganh_tohop` VALUES (11,'7480201','A01','TO',1,'LI',1,'N1',1,'7480201_A01',0,1,1,1,0,0,0,0,0,0,0,0.00),(12,'7480201','D01','TO',1,'VA',1,'N1',1,'7480201_D01',1,1,0,0,0,1,0,0,0,0,0,0.00),(13,'7340101','A01','TO',1,'LI',1,'N1',1,'7340101_A01',1,1,1,0,0,0,0,0,0,0,0,0.00),(14,'7140209','A00','TO',1,'LI',1,'HO',1,'7140209_A00',0,1,1,1,0,0,0,0,0,0,0,0.00),(15,'7220201','D01','TO',1,'VA',1,'N1',1,'7220201_D01',1,1,0,0,0,1,0,0,0,0,0,0.00);
+INSERT INTO xt_nganh_tohop (
+  manganh, matohop, th_mon1, hsmon1, th_mon2, hsmon2, th_mon3, hsmon3,
+  tb_keys, `N1`, `TO`, `VA`, dolech
+) VALUES (
+  '7310101', 'D01', 'TO', 1, 'VA', 1, 'N1', 1,
+  '7310101_D01', 1, 1, 1, 0.00
+);
 /*!40000 ALTER TABLE `xt_nganh_tohop` ENABLE KEYS */;
 UNLOCK TABLES;
 
