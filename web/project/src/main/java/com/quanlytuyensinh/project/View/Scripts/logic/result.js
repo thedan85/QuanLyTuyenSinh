@@ -13,7 +13,7 @@ function normalizeText(value) {
     .toUpperCase();
 }
 
-function isAdmitted(ketQua) {
+export function isAdmitted(ketQua) {
   const normalized = normalizeText(ketQua);
   return normalized.includes("TRUNG") || normalized.includes("DAU");
 }

@@ -1,5 +1,5 @@
 import { store } from "../core/store.js";
-import { buildResultView } from "../logic/result.js";
+import { buildResultView, isAdmitted } from "../logic/result.js";
 import { renderComponent } from "../ui/components.js";
 import { formatFullName, formatScore } from "../utils/format.js";
 import { qs, setText } from "../utils/dom.js";
@@ -117,8 +117,9 @@ export async function initResultPage() {
   if (tableBody) {
     tableBody.innerHTML = view.preferences
       .map((pref) => {
-        const rowClass = pref.ketQua === "TRUNG TUYEN" ? "highlight" : "";
-        const statusLabel = pref.ketQua === "TRUNG TUYEN" ? "Trúng tuyển" : "Không đạt";
+        const admittedRow = isAdmitted(pref.ketQua);
+        const rowClass = admittedRow ? "highlight" : "";
+        const statusLabel = admittedRow ? "Trúng tuyển" : "Không đạt";
         return `
           <tr class="${rowClass}">
             <td>${pref.thuTuNV}</td>
