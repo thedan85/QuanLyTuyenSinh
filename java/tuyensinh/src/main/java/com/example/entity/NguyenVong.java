@@ -40,7 +40,7 @@ public class NguyenVong {
     private String ketQua; // Đậu / Trượt / Chờ xét
 
     @Column(name = "nv_keys", unique = true)
-    private String nvKeys; // CCCD_MaNganh_PhuongThuc
+    private String nvKeys; // CCCD_MaNganh_MaToHop
 
     // --- GETTERS AND SETTERS ---
     public int getIdnv() { return idnv; }

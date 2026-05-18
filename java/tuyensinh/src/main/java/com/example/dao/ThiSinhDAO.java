@@ -1,11 +1,13 @@
 package com.example.dao;
 
-import com.example.entity.ThiSinh;
-import com.example.utils.HibernateUtil;
+import java.util.List;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
-import java.util.List;
+
+import com.example.entity.ThiSinh;
+import com.example.utils.HibernateUtil;
 
 public class ThiSinhDAO {
 
@@ -37,6 +39,39 @@ public class ThiSinhDAO {
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
+        }
+    }
+
+    public List<ThiSinh> getAllThiSinh() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM ThiSinh ORDER BY cccd", ThiSinh.class).list();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public ThiSinh getThiSinhByCccd(String cccd) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "FROM ThiSinh t WHERE t.cccd = :cccd";
+            Query<ThiSinh> query = session.createQuery(hql, ThiSinh.class);
+            query.setParameter("cccd", cccd);
+            return query.uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public ThiSinh getThiSinhBySbd(String sbd) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "FROM ThiSinh t WHERE t.sobaodanh = :sbd";
+            Query<ThiSinh> query = session.createQuery(hql, ThiSinh.class);
+            query.setParameter("sbd", sbd);
+            return query.uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

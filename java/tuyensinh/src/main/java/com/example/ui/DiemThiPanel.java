@@ -1,33 +1,61 @@
 package com.example.ui;
 
-import com.example.dao.DiemThiDAO;
-import com.example.entity.DiemThi;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.File;
-import java.util.List;
+
+import com.example.dao.DiemThiDAO;
+import com.example.dao.ThiSinhDAO;
+import com.example.entity.DiemThi;
+import com.example.entity.ThiSinh;
 
 public class DiemThiPanel extends JPanel {
     private JTable table;
     private JScrollPane tableScroll;
     private DefaultTableModel tableModel;
     private DiemThiDAO dao;
+    private ThiSinhDAO thiSinhDAO;
 
     // Khai báo gần 20 trường dữ liệu
-    private JTextField txtId, txtCccd, txtSbd, txtPhuongThuc;
+    private JTextField txtId, txtSbd, txtPhuongThuc;
+    private JComboBox<String> cbCccd;
     private JTextField txtTo, txtLi, txtHo, txtSi, txtSu, txtDi, txtVa;
     private JTextField txtN1Thi, txtN1Cc, txtCncn, txtCnnn, txtTi, txtKtpl;
     private JTextField txtNl1, txtNk1, txtNk2;
     private JButton btnAdd, btnUpdate, btnDelete, btnClear, btnImport, btnThongKe; // Thêm btnThongKe
+    private final Map<String, String> cccdToSbd = new HashMap<>();
 
     public DiemThiPanel() {
         dao = new DiemThiDAO();
+        thiSinhDAO = new ThiSinhDAO();
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
@@ -36,8 +64,10 @@ public class DiemThiPanel extends JPanel {
         formPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         // Khởi tạo và add các trường theo từng cặp (Label + TextField)
-        txtCccd = new JTextField();
+        cbCccd = new JComboBox<>();
         txtSbd = new JTextField();
+        txtSbd.setEditable(false);
+        txtSbd.setBackground(new Color(235, 235, 235));
         txtPhuongThuc = new JTextField();
         txtTo = new JTextField();
         txtLi = new JTextField();
@@ -60,7 +90,7 @@ public class DiemThiPanel extends JPanel {
 
         // Dòng 1: Thông tin chung
         formPanel.add(new JLabel("CCCD (*):"));
-        formPanel.add(txtCccd);
+        formPanel.add(cbCccd);
         formPanel.add(new JLabel("Số báo danh:"));
         formPanel.add(txtSbd);
         formPanel.add(new JLabel("Phương thức:"));
@@ -174,8 +204,76 @@ public class DiemThiPanel extends JPanel {
         centerPanel.add(tableScroll, BorderLayout.CENTER);
         add(centerPanel, BorderLayout.CENTER);
 
+        loadCccdCombo();
+        cbCccd.addActionListener(e -> syncSbdWithCccd());
         loadData();
         setupEvents();
+
+        this.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentShown(java.awt.event.ComponentEvent e) {
+                String selected = getSelectedCccd();
+                loadCccdCombo();
+                if (!selected.isEmpty()) {
+                    selectCccd(selected);
+                }
+                UiTableColumns.refresh(table);
+            }
+        });
+    }
+
+    private void loadCccdCombo() {
+        cbCccd.removeAllItems();
+        cbCccd.addItem("-- Chọn CCCD --");
+        cccdToSbd.clear();
+        List<ThiSinh> list = thiSinhDAO.getAllThiSinh();
+        if (list != null) {
+            for (ThiSinh ts : list) {
+                String cccd = ts.getCccd();
+                if (cccd != null && !cccd.trim().isEmpty()) {
+                    cbCccd.addItem(cccd);
+                    String sbd = ts.getSobaodanh();
+                    cccdToSbd.put(cccd, sbd == null ? "" : sbd.trim());
+                }
+            }
+        }
+        syncSbdWithCccd();
+    }
+
+    private void syncSbdWithCccd() {
+        String cccd = getSelectedCccd();
+        if (cccd.isEmpty()) {
+            txtSbd.setText("");
+            return;
+        }
+        txtSbd.setText(cccdToSbd.getOrDefault(cccd, ""));
+    }
+
+    private String getSelectedCccd() {
+        Object sel = cbCccd.getSelectedItem();
+        if (sel == null) {
+            return "";
+        }
+        String cccd = sel.toString().trim();
+        return cccd.startsWith("--") ? "" : cccd;
+    }
+
+    private void selectCccd(String cccd) {
+        if (cccd == null || cccd.trim().isEmpty()) {
+            cbCccd.setSelectedIndex(0);
+            return;
+        }
+        boolean found = false;
+        for (int i = 0; i < cbCccd.getItemCount(); i++) {
+            if (cccd.equals(cbCccd.getItemAt(i))) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            cbCccd.addItem(cccd);
+        }
+        cbCccd.setSelectedItem(cccd);
     }
 
     private void loadData() {
@@ -218,7 +316,7 @@ public class DiemThiPanel extends JPanel {
 
     private DiemThi getDataFromForm() throws NumberFormatException {
         DiemThi d = new DiemThi();
-        d.setCccd(txtCccd.getText().trim());
+        d.setCccd(getSelectedCccd());
         d.setSobaodanh(txtSbd.getText().trim());
         d.setdPhuongthuc(txtPhuongThuc.getText().trim());
 
@@ -243,7 +341,7 @@ public class DiemThiPanel extends JPanel {
 
     private void clearForm() {
         txtId.setText("");
-        txtCccd.setText("");
+        cbCccd.setSelectedIndex(0);
         txtSbd.setText("");
         txtPhuongThuc.setText("");
         txtTo.setText("");
@@ -262,7 +360,7 @@ public class DiemThiPanel extends JPanel {
         txtNl1.setText("");
         txtNk1.setText("");
         txtNk2.setText("");
-        txtCccd.setEditable(true);
+        cbCccd.setEnabled(true);
         table.clearSelection();
     }
 
@@ -274,7 +372,7 @@ public class DiemThiPanel extends JPanel {
             int row = table.getSelectedRow();
             if (row >= 0) {
                 txtId.setText(getValue(row, 0));
-                txtCccd.setText(getValue(row, 1));
+                selectCccd(getValue(row, 1));
                 txtSbd.setText(getValue(row, 2));
                 txtPhuongThuc.setText(getValue(row, 3));
                 txtTo.setText(getValue(row, 4));
@@ -293,19 +391,33 @@ public class DiemThiPanel extends JPanel {
                 txtNl1.setText(getValue(row, 17));
                 txtNk1.setText(getValue(row, 18));
                 txtNk2.setText(getValue(row, 19));
-                txtCccd.setEditable(false);
+                cbCccd.setEnabled(false);
             }
         });
 
         btnClear.addActionListener(e -> clearForm());
 
         btnAdd.addActionListener(e -> {
-            if (txtCccd.getText().isEmpty()) {
+            String cccd = getSelectedCccd();
+            if (cccd.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "CCCD không được để trống!");
                 return;
             }
             try {
-                if (dao.isCccdExists(txtCccd.getText().trim())) {
+                if (!thiSinhDAO.isCccdExists(cccd)) {
+                    JOptionPane.showMessageDialog(this, "CCCD chưa tồn tại trong bảng thí sinh!");
+                    return;
+                }
+                ThiSinh ts = thiSinhDAO.getThiSinhByCccd(cccd);
+                String sbd = txtSbd.getText().trim();
+                if (ts != null) {
+                    String sbdDb = ts.getSobaodanh() == null ? "" : ts.getSobaodanh().trim();
+                    if (!sbd.isEmpty() && !sbdDb.isEmpty() && !sbd.equals(sbdDb)) {
+                        JOptionPane.showMessageDialog(this, "Số báo danh không khớp với CCCD đã chọn!");
+                        return;
+                    }
+                }
+                if (dao.isCccdExists(cccd)) {
                     JOptionPane.showMessageDialog(this, "Thí sinh này đã có điểm trong hệ thống!");
                     return;
                 }
@@ -321,6 +433,14 @@ public class DiemThiPanel extends JPanel {
         btnUpdate.addActionListener(e -> {
             if (txtId.getText().isEmpty())
                 return;
+            if (getSelectedCccd().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "CCCD không được để trống!");
+                return;
+            }
+            if (!thiSinhDAO.isCccdExists(getSelectedCccd())) {
+                JOptionPane.showMessageDialog(this, "CCCD chưa tồn tại trong bảng thí sinh!");
+                return;
+            }
             try {
                 DiemThi d = getDataFromForm();
                 d.setIddiemthi(Integer.parseInt(txtId.getText()));
@@ -492,7 +612,7 @@ public class DiemThiPanel extends JPanel {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             boolean first = true;
-            int success = 0, duplicate = 0;
+            int success = 0, duplicate = 0, invalid = 0;
 
             while ((line = br.readLine()) != null) {
                 if (first) {
@@ -526,14 +646,29 @@ public class DiemThiPanel extends JPanel {
                 d.setNk1(getSafeDouble(data, 17));
                 d.setNk2(getSafeDouble(data, 18));
 
+                if (!thiSinhDAO.isCccdExists(d.getCccd())) {
+                    invalid++;
+                    continue;
+                }
+                ThiSinh ts = thiSinhDAO.getThiSinhByCccd(d.getCccd());
+                if (ts != null) {
+                    String sbdDb = ts.getSobaodanh() == null ? "" : ts.getSobaodanh().trim();
+                    String sbdCsv = d.getSobaodanh() == null ? "" : d.getSobaodanh().trim();
+                    if (!sbdCsv.isEmpty() && !sbdDb.isEmpty() && !sbdCsv.equals(sbdDb)) {
+                        invalid++;
+                        continue;
+                    }
+                }
                 if (!dao.isCccdExists(d.getCccd())) {
-                    if (dao.addDiem(d))
+                    if (dao.addDiem(d)) {
                         success++;
-                } else
+                    }
+                } else {
                     duplicate++;
+                }
             }
             JOptionPane.showMessageDialog(this,
-                    "Import xong!\nThành công: " + success + "\nTrùng/Bỏ qua: " + duplicate);
+                    "Import xong!\nThành công: " + success + "\nTrùng/Bỏ qua: " + duplicate + "\nKhông hợp lệ: " + invalid);
             loadData();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Lỗi đọc file CSV: " + ex.getMessage());

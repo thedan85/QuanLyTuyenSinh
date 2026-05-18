@@ -1,19 +1,33 @@
 package com.example.ui;
 
-import com.example.dao.NguyenVongDAO;
-import com.example.entity.NguyenVong;
-import com.example.entity.ThiSinh;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.util.List;
+
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.List;
+
+import com.example.dao.NganhDAO;
+import com.example.dao.NguyenVongDAO;
+import com.example.dao.ToHopDAO;
+import com.example.entity.NguyenVong;
+import com.example.entity.ThiSinh;
 
 public class StudentNguyenVongPanel extends JPanel {
     private JTable table;
     private JScrollPane tableScroll;
     private DefaultTableModel tableModel;
     private NguyenVongDAO dao;
+    private NganhDAO nganhDAO;
+    private ToHopDAO toHopDAO;
     private ThiSinh ts;
 
     // Chỉ cho phép nhập 4 trường này
@@ -23,6 +37,8 @@ public class StudentNguyenVongPanel extends JPanel {
     public StudentNguyenVongPanel(ThiSinh ts) {
         this.ts = ts;
         this.dao = new NguyenVongDAO();
+        this.nganhDAO = new NganhDAO();
+        this.toHopDAO = new ToHopDAO();
         setLayout(new BorderLayout(10, 10));
 
         // 1. Form nhập liệu tối giản
@@ -89,14 +105,29 @@ public class StudentNguyenVongPanel extends JPanel {
 
         btnAdd.addActionListener(e -> {
             try {
+                String maNganh = txtMaNganh.getText().trim();
+                String toHop = txtToHop.getText().trim();
+                if (maNganh.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng nhập Mã ngành!");
+                    return;
+                }
+                if (!nganhDAO.isMaNganhExists(maNganh)) {
+                    JOptionPane.showMessageDialog(this, "Mã ngành không tồn tại!");
+                    return;
+                }
+                if (!toHop.isEmpty() && !toHopDAO.isMaToHopExists(toHop)) {
+                    JOptionPane.showMessageDialog(this, "Tổ hợp môn không tồn tại!");
+                    return;
+                }
+
                 NguyenVong nv = new NguyenVong();
                 nv.setTsCccd(ts.getCccd());
-                nv.setMaNganh(txtMaNganh.getText().trim());
+                nv.setMaNganh(maNganh);
                 nv.setThuTuNV(Integer.parseInt(txtThuTu.getText().trim()));
                 nv.setPhuongThuc(txtPhuongThuc.getText().trim());
-                nv.setMaToHop(txtToHop.getText().trim());
+                nv.setMaToHop(toHop);
                 nv.setKetQua("Chờ xét");
-                nv.setNvKeys(ts.getCccd() + "_" + nv.getMaNganh() + "_" + nv.getPhuongThuc());
+                nv.setNvKeys(ts.getCccd() + "_" + nv.getMaNganh() + "_" + nv.getMaToHop());
 
                 if (dao.isThuTuExists(ts.getCccd(), nv.getThuTuNV())) {
                     JOptionPane.showMessageDialog(this,
@@ -104,11 +135,17 @@ public class StudentNguyenVongPanel extends JPanel {
                     return;
                 }
 
+                if (dao.isNganhToHopExists(nv.getTsCccd(), nv.getMaNganh(), nv.getMaToHop())) {
+                    JOptionPane.showMessageDialog(this,
+                            "Bạn đã đăng ký ngành + tổ hợp này rồi!");
+                    return;
+                }
+
                 if (dao.add(nv)) {
                     JOptionPane.showMessageDialog(this, "Đã thêm nguyện vọng!");
                     loadData();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Lỗi: Có thể bạn đã đăng ký ngành này rồi!");
+                    JOptionPane.showMessageDialog(this, "Lỗi: Có thể bạn đã đăng ký ngành + tổ hợp này rồi!");
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Vui lòng nhập đúng định dạng!");

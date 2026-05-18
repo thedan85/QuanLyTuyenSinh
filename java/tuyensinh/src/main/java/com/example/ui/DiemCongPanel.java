@@ -1,21 +1,36 @@
 package com.example.ui;
 
-import com.example.dao.DiemCongDAO;
-import com.example.dao.NganhDAO;
-import com.example.dao.ToHopDAO;
-import com.example.entity.DiemCong;
-import com.example.entity.Nganh;
-import com.example.entity.ToHopMon;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
+
+import com.example.dao.DiemCongDAO;
+import com.example.dao.NganhDAO;
+import com.example.dao.ThiSinhDAO;
+import com.example.dao.ToHopDAO;
+import com.example.entity.DiemCong;
+import com.example.entity.Nganh;
+import com.example.entity.ToHopMon;
 
 public class DiemCongPanel extends JPanel {
     private JTable table;
@@ -24,8 +39,10 @@ public class DiemCongPanel extends JPanel {
     private DiemCongDAO dao;
     private NganhDAO nganhDAO;
     private ToHopDAO toHopDAO;
+    private ThiSinhDAO thiSinhDAO;
 
-    private JTextField txtId, txtCccd, txtPhuongThuc;
+    private JTextField txtId, txtPhuongThuc;
+    private JComboBox<String> cbCccd;
     private JComboBox<String> cbMaNganh, cbMaToHop;
     private JTextField txtDiemCC, txtDiemUtxt, txtDiemTong, txtGhiChu;
     private JTextField txtSearch;
@@ -35,6 +52,7 @@ public class DiemCongPanel extends JPanel {
         dao = new DiemCongDAO();
         nganhDAO = new NganhDAO();
         toHopDAO = new ToHopDAO();
+        thiSinhDAO = new ThiSinhDAO();
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -44,8 +62,8 @@ public class DiemCongPanel extends JPanel {
         formPanel.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         formPanel.add(new JLabel("Thí sinh (CCCD) (*):"));
-        txtCccd = new JTextField();
-        formPanel.add(txtCccd);
+        cbCccd = new JComboBox<>();
+        formPanel.add(cbCccd);
 
         formPanel.add(new JLabel("Nguyện vọng (Mã ngành):"));
         cbMaNganh = new JComboBox<>();
@@ -151,9 +169,11 @@ public class DiemCongPanel extends JPanel {
         this.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentShown(java.awt.event.ComponentEvent e) {
+                Object selCccd = cbCccd.getSelectedItem();
                 Object selNganh = cbMaNganh.getSelectedItem();
                 Object selToHop = cbMaToHop.getSelectedItem();
                 loadComboBoxData();
+                if (selCccd != null) cbCccd.setSelectedItem(selCccd);
                 if (selNganh != null) cbMaNganh.setSelectedItem(selNganh);
                 if (selToHop != null) cbMaToHop.setSelectedItem(selToHop);
                 UiTableColumns.refresh(table);
@@ -162,6 +182,8 @@ public class DiemCongPanel extends JPanel {
     }
 
     private void loadComboBoxData() {
+        loadCccdCombo();
+
         cbMaNganh.removeAllItems();
         cbMaNganh.addItem("-- Không chọn / Tất cả --");
         List<Nganh> listNganh = nganhDAO.getAllNganh();
@@ -179,6 +201,29 @@ public class DiemCongPanel extends JPanel {
                 cbMaToHop.addItem(th.getMatohop());
             }
         }
+    }
+
+    private void loadCccdCombo() {
+        cbCccd.removeAllItems();
+        cbCccd.addItem("-- Chọn CCCD --");
+        List<com.example.entity.ThiSinh> list = thiSinhDAO.getAllThiSinh();
+        if (list != null) {
+            for (com.example.entity.ThiSinh ts : list) {
+                String cccd = ts.getCccd();
+                if (cccd != null && !cccd.trim().isEmpty()) {
+                    cbCccd.addItem(cccd);
+                }
+            }
+        }
+    }
+
+    private String getSelectedCccd() {
+        Object sel = cbCccd.getSelectedItem();
+        if (sel == null) {
+            return "";
+        }
+        String cccd = sel.toString().trim();
+        return cccd.startsWith("--") ? "" : cccd;
     }
 
     private void loadData(String keyword) {
@@ -204,7 +249,7 @@ public class DiemCongPanel extends JPanel {
 
     private void clearForm() {
         txtId.setText("");
-        txtCccd.setText("");
+        cbCccd.setSelectedIndex(0);
         cbMaNganh.setSelectedIndex(0);
         cbMaToHop.setSelectedIndex(0);
         txtPhuongThuc.setText("");
@@ -212,7 +257,7 @@ public class DiemCongPanel extends JPanel {
         txtDiemUtxt.setText("");
         txtDiemTong.setText("");
         txtGhiChu.setText("");
-        txtCccd.setEditable(true);
+        cbCccd.setEnabled(true);
         cbMaNganh.setEnabled(true);
         cbMaToHop.setEnabled(true);
         txtPhuongThuc.setEditable(true);
@@ -221,7 +266,7 @@ public class DiemCongPanel extends JPanel {
 
     private DiemCong getDataFromForm() throws NumberFormatException {
         DiemCong d = new DiemCong();
-        d.setTsCccd(txtCccd.getText().trim());
+        d.setTsCccd(getSelectedCccd());
 
         String selectedNganh = (String) cbMaNganh.getSelectedItem();
         d.setManganh((selectedNganh == null || selectedNganh.startsWith("--")) ? "" : selectedNganh);
@@ -247,9 +292,19 @@ public class DiemCongPanel extends JPanel {
     private void selectComboItem(JComboBox<String> combo, String value) {
         if (value == null || value.isEmpty()) {
             combo.setSelectedIndex(0);
-        } else {
-            combo.setSelectedItem(value);
+            return;
         }
+        boolean found = false;
+        for (int i = 0; i < combo.getItemCount(); i++) {
+            if (value.equals(combo.getItemAt(i))) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            combo.addItem(value);
+        }
+        combo.setSelectedItem(value);
     }
 
     private void setupEvents() {
@@ -259,7 +314,7 @@ public class DiemCongPanel extends JPanel {
             int row = table.getSelectedRow();
             if (row >= 0) {
                 txtId.setText(table.getValueAt(row, 0).toString());
-                txtCccd.setText(table.getValueAt(row, 1) != null ? table.getValueAt(row, 1).toString() : "");
+                selectComboItem(cbCccd, table.getValueAt(row, 1) != null ? table.getValueAt(row, 1).toString() : "");
                 selectComboItem(cbMaNganh, table.getValueAt(row, 2) != null ? table.getValueAt(row, 2).toString() : "");
                 selectComboItem(cbMaToHop, table.getValueAt(row, 3) != null ? table.getValueAt(row, 3).toString() : "");
                 txtDiemCC.setText(table.getValueAt(row, 4) != null ? table.getValueAt(row, 4).toString() : "");
@@ -268,7 +323,7 @@ public class DiemCongPanel extends JPanel {
                 txtPhuongThuc.setText(table.getValueAt(row, 7) != null ? table.getValueAt(row, 7).toString() : "");
                 txtGhiChu.setText(table.getValueAt(row, 8) != null ? table.getValueAt(row, 8).toString() : "");
 
-                txtCccd.setEditable(false);
+                cbCccd.setEnabled(false);
                 cbMaNganh.setEnabled(false);
                 cbMaToHop.setEnabled(false);
                 txtPhuongThuc.setEditable(false);
@@ -278,11 +333,16 @@ public class DiemCongPanel extends JPanel {
         btnClear.addActionListener(e -> clearForm());
 
         btnAdd.addActionListener(e -> {
-            if (txtCccd.getText().isEmpty()) {
+            String cccd = getSelectedCccd();
+            if (cccd.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "CCCD không được để trống!");
                 return;
             }
             try {
+                if (!thiSinhDAO.isCccdExists(cccd)) {
+                    JOptionPane.showMessageDialog(this, "CCCD chưa tồn tại trong bảng thí sinh!");
+                    return;
+                }
                 DiemCong d = getDataFromForm();
                 if (dao.isKeyExists(d.getDcKeys())) {
                     JOptionPane.showMessageDialog(this, "Điểm cộng cho khóa này đã tồn tại!");
@@ -349,7 +409,7 @@ public class DiemCongPanel extends JPanel {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             boolean first = true;
-            int success = 0, duplicate = 0;
+            int success = 0, duplicate = 0, invalid = 0;
             while ((line = br.readLine()) != null) {
                 if (first) {
                     first = false;
@@ -362,6 +422,19 @@ public class DiemCongPanel extends JPanel {
                     d.setManganh(data[1].trim());
                     d.setMatohop(data[2].trim());
                     d.setPhuongthuc(data[3].trim());
+
+                    if (d.getTsCccd().isEmpty() || !thiSinhDAO.isCccdExists(d.getTsCccd())) {
+                        invalid++;
+                        continue;
+                    }
+                    if (!d.getManganh().isEmpty() && !nganhDAO.isMaNganhExists(d.getManganh())) {
+                        invalid++;
+                        continue;
+                    }
+                    if (!d.getMatohop().isEmpty() && !toHopDAO.isMaToHopExists(d.getMatohop())) {
+                        invalid++;
+                        continue;
+                    }
 
                     Double dcc = data.length > 4 && !data[4].trim().isEmpty() ? Double.parseDouble(data[4].trim()) : 0.0;
                     Double dut = data.length > 5 && !data[5].trim().isEmpty() ? Double.parseDouble(data[5].trim()) : 0.0;
@@ -388,7 +461,7 @@ public class DiemCongPanel extends JPanel {
                 }
             }
             JOptionPane.showMessageDialog(this,
-                    "Import xong!\nThành công: " + success + "\nBỏ qua (trùng): " + duplicate);
+                    "Import xong!\nThành công: " + success + "\nBỏ qua (trùng): " + duplicate + "\nKhông hợp lệ: " + invalid);
             loadData("");
             txtSearch.setText("");
         } catch (Exception ex) {

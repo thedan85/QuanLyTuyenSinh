@@ -1,11 +1,13 @@
 package com.example.dao;
 
-import com.example.entity.NguyenVong;
-import com.example.utils.HibernateUtil;
+import java.util.List;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
-import java.util.List;
+
+import com.example.entity.NguyenVong;
+import com.example.utils.HibernateUtil;
 
 public class NguyenVongDAO {
 
@@ -75,6 +77,45 @@ public class NguyenVongDAO {
         }
     }
 
+    public boolean isNganhToHopExists(String cccd, String maNganh, String maToHop) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "SELECT count(n) FROM NguyenVong n WHERE n.tsCccd = :cccd AND n.maNganh = :maNganh AND coalesce(n.maToHop, '') = :maToHop";
+            Query<Long> query = session.createQuery(hql, Long.class);
+            query.setParameter("cccd", cccd);
+            query.setParameter("maNganh", maNganh);
+            query.setParameter("maToHop", maToHop == null ? "" : maToHop);
+            return query.uniqueResult() > 0;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    public boolean isNganhToHopExistsExcept(String cccd, String maNganh, String maToHop, int idnv) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "SELECT count(n) FROM NguyenVong n WHERE n.tsCccd = :cccd AND n.maNganh = :maNganh AND coalesce(n.maToHop, '') = :maToHop AND n.idnv <> :id";
+            Query<Long> query = session.createQuery(hql, Long.class);
+            query.setParameter("cccd", cccd);
+            query.setParameter("maNganh", maNganh);
+            query.setParameter("maToHop", maToHop == null ? "" : maToHop);
+            query.setParameter("id", idnv);
+            return query.uniqueResult() > 0;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    public boolean isKeyExistsExcept(String nvKeys, int idnv) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "SELECT count(n) FROM NguyenVong n WHERE n.nvKeys = :keys AND n.idnv <> :id";
+            Query<Long> query = session.createQuery(hql, Long.class);
+            query.setParameter("keys", nvKeys);
+            query.setParameter("id", idnv);
+            return query.uniqueResult() > 0;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     public List<Object[]> traCuuTheoCccdHoacSbd(String keyword) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             String hql = "SELECT ts.cccd, ts.sobaodanh, ts.ho, ts.ten, " +
@@ -99,6 +140,19 @@ public class NguyenVongDAO {
             Query<Long> query = session.createQuery(hql, Long.class);
             query.setParameter("cccd", cccd);
             query.setParameter("tt", thuTu);
+            return query.uniqueResult() > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isThuTuExistsExcept(String cccd, int thuTu, int idnv) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "SELECT count(n) FROM NguyenVong n WHERE n.tsCccd = :cccd AND n.thuTuNV = :tt AND n.idnv <> :id";
+            Query<Long> query = session.createQuery(hql, Long.class);
+            query.setParameter("cccd", cccd);
+            query.setParameter("tt", thuTu);
+            query.setParameter("id", idnv);
             return query.uniqueResult() > 0;
         } catch (Exception e) {
             return false;

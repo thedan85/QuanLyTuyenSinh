@@ -1,18 +1,30 @@
 package com.example.ui;
 
-import com.example.dao.NganhDAO;
-import com.example.entity.Nganh;
-import com.example.dao.ToHopDAO;
-import com.example.entity.ToHopMon;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
+
+import com.example.dao.NganhDAO;
+import com.example.dao.ToHopDAO;
+import com.example.entity.Nganh;
+import com.example.entity.ToHopMon;
 
 public class NganhPanel extends JPanel {
     private JTable table;
@@ -223,6 +235,28 @@ public class NganhPanel extends JPanel {
         return (val == null) ? "" : val.toString();
     }
 
+    private Integer parseIntOrNull(String text) {
+        if (text == null) return null;
+        String value = text.trim();
+        if (value.isEmpty()) return null;
+        return Integer.parseInt(value);
+    }
+
+    private Double parseDoubleOrNull(String text) {
+        if (text == null) return null;
+        String value = text.trim();
+        if (value.isEmpty()) return null;
+        value = value.replace(",", ".");
+        return Double.parseDouble(value);
+    }
+
+    private String parseIntStringOrNull(String text) {
+        if (text == null) return null;
+        String value = text.trim();
+        if (value.isEmpty()) return null;
+        return String.valueOf(Integer.parseInt(value));
+    }
+
     private void setupEvents() {
         table.getSelectionModel().addListSelectionListener(e -> {
             int row = table.getSelectedRow();
@@ -261,8 +295,8 @@ public class NganhPanel extends JPanel {
                 Nganh n = new Nganh();
                 n.setManganh(txtMaNganh.getText().trim());
                 n.setTennganh(txtTenNganh.getText().trim());
-                n.setnChitieu(txtChiTieu.getText().isEmpty() ? null : Integer.parseInt(txtChiTieu.getText().trim()));
-                n.setnDiemsan(txtDiemSan.getText().isEmpty() ? null : Double.parseDouble(txtDiemSan.getText().trim()));
+                n.setnChitieu(parseIntOrNull(txtChiTieu.getText()));
+                n.setnDiemsan(parseDoubleOrNull(txtDiemSan.getText()));
                 String selected = (String) cbTohopGoc.getSelectedItem();
                 if (selected != null && selected.equals("-- Chọn tổ hợp --")) {
                     JOptionPane.showMessageDialog(this, "Vui lòng chọn tổ hợp gốc!");
@@ -271,16 +305,16 @@ public class NganhPanel extends JPanel {
                 n.setnTohopgoc(selected);
 
                 // Lưu thêm các trường còn lại khi thêm mới
-                n.setnDiemtrungtuyen(txtDiemTrungTuyen.getText().isEmpty() ? null : Double.parseDouble(txtDiemTrungTuyen.getText().trim()));
-                n.setnTuyenthang(txtTuyenThang.getText());
-                n.setnDgnl(txtDgnl.getText());
-                n.setnThpt(txtThpt.getText());
-                n.setnVsat(txtVsat.getText());
+                n.setnDiemtrungtuyen(parseDoubleOrNull(txtDiemTrungTuyen.getText()));
+                n.setnTuyenthang(txtTuyenThang.getText().trim());
+                n.setnDgnl(txtDgnl.getText().trim());
+                n.setnThpt(txtThpt.getText().trim());
+                n.setnVsat(txtVsat.getText().trim());
                 
-                n.setSlXtt(txtSlXtt.getText().isEmpty() ? null : Integer.parseInt(txtSlXtt.getText().trim()));
-                n.setSlDgnl(txtSlDgnl.getText().isEmpty() ? null : Integer.parseInt(txtSlDgnl.getText().trim()));
-                n.setSlVsat(txtSlVsat.getText().isEmpty() ? null : Integer.parseInt(txtSlVsat.getText().trim()));
-                n.setSlThpt(txtSlThpt.getText());
+                n.setSlXtt(parseIntOrNull(txtSlXtt.getText()));
+                n.setSlDgnl(parseIntOrNull(txtSlDgnl.getText()));
+                n.setSlVsat(parseIntOrNull(txtSlVsat.getText()));
+                n.setSlThpt(parseIntStringOrNull(txtSlThpt.getText()));
 
                 if (nganhDAO.addNganh(n)) {
                     JOptionPane.showMessageDialog(this, "Thêm thành công!");
@@ -302,21 +336,21 @@ public class NganhPanel extends JPanel {
                 n.setIdnganh(Integer.parseInt(txtId.getText()));
                 n.setManganh(txtMaNganh.getText().trim());
                 n.setTennganh(txtTenNganh.getText().trim());
-                n.setnChitieu(txtChiTieu.getText().isEmpty() ? null : Integer.parseInt(txtChiTieu.getText().trim()));
-                n.setnDiemsan(txtDiemSan.getText().isEmpty() ? null : Double.parseDouble(txtDiemSan.getText().trim()));
+                n.setnChitieu(parseIntOrNull(txtChiTieu.getText()));
+                n.setnDiemsan(parseDoubleOrNull(txtDiemSan.getText()));
                 n.setnTohopgoc((String) cbTohopGoc.getSelectedItem());
 
-                n.setnDiemtrungtuyen(txtDiemTrungTuyen.getText().isEmpty() ? null : Double.parseDouble(txtDiemTrungTuyen.getText().trim()));
-                n.setnTuyenthang(txtTuyenThang.getText());
-                n.setnDgnl(txtDgnl.getText());
-                n.setnThpt(txtThpt.getText());
-                n.setnVsat(txtVsat.getText());
+                n.setnDiemtrungtuyen(parseDoubleOrNull(txtDiemTrungTuyen.getText()));
+                n.setnTuyenthang(txtTuyenThang.getText().trim());
+                n.setnDgnl(txtDgnl.getText().trim());
+                n.setnThpt(txtThpt.getText().trim());
+                n.setnVsat(txtVsat.getText().trim());
                 
                 // ĐÃ FIX: Lưu đầy đủ các ô số lượng khi bấm cập nhật
-                n.setSlXtt(txtSlXtt.getText().isEmpty() ? null : Integer.parseInt(txtSlXtt.getText().trim()));
-                n.setSlDgnl(txtSlDgnl.getText().isEmpty() ? null : Integer.parseInt(txtSlDgnl.getText().trim()));
-                n.setSlVsat(txtSlVsat.getText().isEmpty() ? null : Integer.parseInt(txtSlVsat.getText().trim()));
-                n.setSlThpt(txtSlThpt.getText()); 
+                n.setSlXtt(parseIntOrNull(txtSlXtt.getText()));
+                n.setSlDgnl(parseIntOrNull(txtSlDgnl.getText()));
+                n.setSlVsat(parseIntOrNull(txtSlVsat.getText()));
+                n.setSlThpt(parseIntStringOrNull(txtSlThpt.getText()));
 
                 if (nganhDAO.updateNganh(n)) {
                     JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
