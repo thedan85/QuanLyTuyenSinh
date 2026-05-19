@@ -41,8 +41,8 @@ public class DiemCongPanel extends JPanel {
     private ToHopDAO toHopDAO;
     private ThiSinhDAO thiSinhDAO;
 
-    private JTextField txtId, txtPhuongThuc;
-    private JComboBox<String> cbCccd;
+    private JTextField txtId;
+    private JComboBox<String> cbCccd, cbPhuongThuc;
     private JComboBox<String> cbMaNganh, cbMaToHop;
     private JTextField txtDiemCC, txtDiemUtxt, txtDiemTong, txtGhiChu;
     private JTextField txtSearch;
@@ -73,9 +73,9 @@ public class DiemCongPanel extends JPanel {
         cbMaToHop = new JComboBox<>();
         formPanel.add(cbMaToHop);
 
-        formPanel.add(new JLabel("Phương thức:"));
-        txtPhuongThuc = new JTextField();
-        formPanel.add(txtPhuongThuc);
+        formPanel.add(new JLabel("Phương thức (*):"));
+        cbPhuongThuc = PhuongThucOptions.newCombo();
+        formPanel.add(cbPhuongThuc);
 
         formPanel.add(new JLabel("Điểm cộng Tiếng Anh:"));
         txtDiemCC = new JTextField();
@@ -252,7 +252,7 @@ public class DiemCongPanel extends JPanel {
         cbCccd.setSelectedIndex(0);
         cbMaNganh.setSelectedIndex(0);
         cbMaToHop.setSelectedIndex(0);
-        txtPhuongThuc.setText("");
+        PhuongThucOptions.select(cbPhuongThuc, PhuongThucOptions.PT1);
         txtDiemCC.setText("");
         txtDiemUtxt.setText("");
         txtDiemTong.setText("");
@@ -260,7 +260,7 @@ public class DiemCongPanel extends JPanel {
         cbCccd.setEnabled(true);
         cbMaNganh.setEnabled(true);
         cbMaToHop.setEnabled(true);
-        txtPhuongThuc.setEditable(true);
+        cbPhuongThuc.setEnabled(true);
         table.clearSelection();
     }
 
@@ -274,7 +274,7 @@ public class DiemCongPanel extends JPanel {
         String selectedToHop = (String) cbMaToHop.getSelectedItem();
         d.setMatohop((selectedToHop == null || selectedToHop.startsWith("--")) ? "" : selectedToHop);
 
-        d.setPhuongthuc(txtPhuongThuc.getText().trim());
+        d.setPhuongthuc(PhuongThucOptions.getCode(cbPhuongThuc));
 
         String sCC = txtDiemCC.getText().trim();
         String sUT = txtDiemUtxt.getText().trim();
@@ -320,13 +320,14 @@ public class DiemCongPanel extends JPanel {
                 txtDiemCC.setText(table.getValueAt(row, 4) != null ? table.getValueAt(row, 4).toString() : "");
                 txtDiemUtxt.setText(table.getValueAt(row, 5) != null ? table.getValueAt(row, 5).toString() : "");
                 txtDiemTong.setText(table.getValueAt(row, 6) != null ? table.getValueAt(row, 6).toString() : "");
-                txtPhuongThuc.setText(table.getValueAt(row, 7) != null ? table.getValueAt(row, 7).toString() : "");
+                PhuongThucOptions.select(cbPhuongThuc,
+                        table.getValueAt(row, 7) != null ? table.getValueAt(row, 7).toString() : "");
                 txtGhiChu.setText(table.getValueAt(row, 8) != null ? table.getValueAt(row, 8).toString() : "");
 
                 cbCccd.setEnabled(false);
                 cbMaNganh.setEnabled(false);
                 cbMaToHop.setEnabled(false);
-                txtPhuongThuc.setEditable(false);
+                cbPhuongThuc.setEnabled(false);
             }
         });
 
@@ -421,7 +422,7 @@ public class DiemCongPanel extends JPanel {
                     d.setTsCccd(data[0].trim());
                     d.setManganh(data[1].trim());
                     d.setMatohop(data[2].trim());
-                    d.setPhuongthuc(data[3].trim());
+                    d.setPhuongthuc(PhuongThucOptions.toCode(data[3]));
 
                     if (d.getTsCccd().isEmpty() || !thiSinhDAO.isCccdExists(d.getTsCccd())) {
                         invalid++;

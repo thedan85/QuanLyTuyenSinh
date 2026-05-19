@@ -1,6 +1,8 @@
 package com.example.ui;
 
 import com.example.dao.NganhDAO;
+import com.example.dao.NguyenVongDAO;
+import com.example.dto.TrungTuyenRow;
 import com.example.entity.Nganh;
 
 import javax.swing.*;
@@ -11,7 +13,7 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * Dialog danh sách trúng tuyển theo ngành (mục 6b) — UI; dữ liệu nối DAO sau.
+ * Dialog danh sách trúng tuyển theo ngành (mục 6b).
  */
 public class TrungTuyenTheoNganhDialog extends JDialog {
 
@@ -22,6 +24,7 @@ public class TrungTuyenTheoNganhDialog extends JDialog {
     };
 
     private final NganhDAO nganhDAO = new NganhDAO();
+    private final NguyenVongDAO nguyenVongDAO = new NguyenVongDAO();
     private JComboBox<String> cbNganh;
     private JButton btnRefresh;
     private DefaultTableModel tableModel;
@@ -108,8 +111,48 @@ public class TrungTuyenTheoNganhDialog extends JDialog {
         }
     }
 
-    /** UI placeholder — nối NguyenVongDAO sau. */
     public void refreshTable() {
         tableModel.setRowCount(0);
+        String maNganh = resolveMaNganhFromCombo();
+        List<TrungTuyenRow> rows = nguyenVongDAO.listTrungTuyenByNganh(maNganh);
+        if (rows == null) {
+            return;
+        }
+        for (TrungTuyenRow r : rows) {
+            tableModel.addRow(new Object[]{
+                    r.getCccd(),
+                    r.getHo(),
+                    r.getTen(),
+                    r.getThuTuNv(),
+                    r.getMaNganh(),
+                    r.getTenNganh(),
+                    r.getPhuongThuc(),
+                    r.getMaToHop(),
+                    formatNum(r.getThm()),
+                    formatNum(r.getDiemXetTuyen()),
+                    r.getKetQua()
+            });
+        }
+        UiTableColumns.refresh(table);
+    }
+
+    private String resolveMaNganhFromCombo() {
+        Object sel = cbNganh.getSelectedItem();
+        if (sel == null || TAT_CA.equals(sel.toString())) {
+            return null;
+        }
+        String s = sel.toString().trim();
+        int idx = s.indexOf(" - ");
+        return idx > 0 ? s.substring(0, idx).trim() : s;
+    }
+
+    private static String formatNum(Double v) {
+        if (v == null) {
+            return "";
+        }
+        if (v == v.longValue()) {
+            return String.valueOf(v.longValue());
+        }
+        return String.format("%.2f", v);
     }
 }

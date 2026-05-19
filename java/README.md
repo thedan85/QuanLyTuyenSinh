@@ -1,6 +1,6 @@
 1. Mở app MySQL WorkBench 8.0 CE
 
-2. Kết nối CSDL và import file database.sql
+2. Kết nối CSDL và import file **database.sql** ở **thư mục gốc repo** (cùng cấp với thư mục `java/`), tạo database `xettuyen2026`
 
 3. Mở file "hibernate.cfg.xml" trong \tuyensinh\src\main\resources
 

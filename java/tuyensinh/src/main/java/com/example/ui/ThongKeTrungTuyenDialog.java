@@ -1,13 +1,17 @@
 package com.example.ui;
 
+import com.example.dao.NguyenVongDAO;
+import com.example.dto.ThongKeTrungTuyenRow;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.List;
 
 /**
- * Dialog thống kê số trúng tuyển theo PT / ngành (mục 6c) — UI; dữ liệu nối DAO sau.
+ * Dialog thống kê số trúng tuyển theo PT / ngành (mục 6c).
  */
 public class ThongKeTrungTuyenDialog extends JDialog {
 
@@ -17,6 +21,7 @@ public class ThongKeTrungTuyenDialog extends JDialog {
             "SL THPT (CT)", "SL ĐGNL (CT)", "SL VSAT (CT)"
     };
 
+    private final NguyenVongDAO nguyenVongDAO = new NguyenVongDAO();
     private JButton btnRefresh;
     private DefaultTableModel tableModel;
     private JTable table;
@@ -76,8 +81,26 @@ public class ThongKeTrungTuyenDialog extends JDialog {
         dialog.setVisible(true);
     }
 
-    /** UI placeholder — nối NguyenVongDAO sau. */
     public void refreshTable() {
         tableModel.setRowCount(0);
+        List<ThongKeTrungTuyenRow> rows = nguyenVongDAO.thongKeTrungTuyenTheoNganh();
+        if (rows == null) {
+            return;
+        }
+        for (ThongKeTrungTuyenRow r : rows) {
+            tableModel.addRow(new Object[]{
+                    r.getMaNganh(),
+                    r.getTenNganh(),
+                    r.getChiTieu(),
+                    r.getTrungPt1(),
+                    r.getTrungPt2(),
+                    r.getTrungPt3(),
+                    r.getTongTrung(),
+                    r.getSlThptCt(),
+                    r.getSlDgnlCt(),
+                    r.getSlVsatCt()
+            });
+        }
+        UiTableColumns.refresh(table);
     }
 }

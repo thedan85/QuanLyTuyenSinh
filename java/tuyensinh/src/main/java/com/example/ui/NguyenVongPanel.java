@@ -6,15 +6,16 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridLayout;
-import javax.swing.BoxLayout;
-import javax.swing.border.TitledBorder;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -25,6 +26,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
@@ -48,7 +50,7 @@ public class NguyenVongPanel extends JPanel {
 
     // CHỈ GIỮ LẠI CÁC TRƯỜNG NHẬP LIỆU CƠ BẢN
     private JTextField txtIdnv, txtNvTt;
-    private JTextField txtTtPhuongthuc;
+    private JComboBox<String> cbPhuongThuc;
     private JComboBox<String> cbCccd, cbMaNganh, cbMaToHop;
 
     private JButton btnAdd, btnEdit, btnDelete, btnRefresh, btnImport;
@@ -62,33 +64,37 @@ public class NguyenVongPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // --- 1. FORM NHẬP LIỆU (cùng cấu trúc viền/padding như NganhPanel) ---
-        JPanel formPanel = new JPanel(new GridLayout(2, 6, 10, 10));
-        formPanel.setBorder(new EmptyBorder(12, 12, 12, 12));
-
-        txtIdnv = new JTextField(); txtIdnv.setEditable(false);
+        // --- 1. FORM NHẬP LIỆU ---
+        txtIdnv = new JTextField();
+        txtIdnv.setEditable(false);
         cbCccd = new JComboBox<>();
         cbMaNganh = new JComboBox<>();
         cbMaToHop = new JComboBox<>();
         txtNvTt = new JTextField();
-        txtTtPhuongthuc = new JTextField();
+        cbPhuongThuc = PhuongThucOptions.newCombo();
+        cbPhuongThuc.setPrototypeDisplayValue("PT3 - V-SAT (VSAT_*)");
+        cbCccd.setPrototypeDisplayValue("001204000001 - Nguyễn Văn A");
+        cbMaNganh.setPrototypeDisplayValue("7480201 - Công nghệ thông tin");
+        cbMaToHop.setPrototypeDisplayValue("-- Chọn tổ hợp --");
 
-        // Hàng 1
-        formPanel.add(new JLabel("ID NV:")); formPanel.add(txtIdnv);
-        formPanel.add(new JLabel("CCCD (*):")); formPanel.add(cbCccd);
-        formPanel.add(new JLabel("Mã Ngành (*):")); formPanel.add(cbMaNganh);
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Nhập thông tin Nguyện Vọng cơ bản"),
+                new EmptyBorder(12, 14, 12, 14)));
 
-        // Hàng 2
-        formPanel.add(new JLabel("Thứ tự NV (*):")); formPanel.add(txtNvTt);
-        formPanel.add(new JLabel("Phương thức (*):")); formPanel.add(txtTtPhuongthuc);
-        formPanel.add(new JLabel("Tổ hợp:")); formPanel.add(cbMaToHop);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(6, 10, 6, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JScrollPane formScroll = new JScrollPane(formPanel);
-        formScroll.setBorder(BorderFactory.createTitledBorder("Nhập thông tin Nguyện Vọng cơ bản"));
-        formScroll.setViewportBorder(null);
-        formScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        formScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-        add(formScroll, BorderLayout.NORTH);
+        addFormField(formPanel, gbc, 0, 0, "ID NV:", txtIdnv);
+        addFormField(formPanel, gbc, 0, 1, "CCCD (*):", cbCccd);
+        addFormField(formPanel, gbc, 0, 2, "Mã Ngành (*):", cbMaNganh);
+        addFormField(formPanel, gbc, 1, 0, "Thứ tự NV (*):", txtNvTt);
+        addFormField(formPanel, gbc, 1, 1, "Phương thức (*):", cbPhuongThuc);
+        addFormField(formPanel, gbc, 1, 2, "Tổ hợp:", cbMaToHop);
+
+        add(formPanel, BorderLayout.NORTH);
 
         // --- 2. THANH CÔNG CỤ (2 hàng: CRUD + Xét tuyển) ---
         JPanel crudBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
@@ -268,10 +274,10 @@ public class NguyenVongPanel extends JPanel {
         cbMaNganh.setSelectedIndex(0);
         cbMaToHop.setSelectedIndex(0);
         txtNvTt.setText("");
-        txtTtPhuongthuc.setText("");
+        PhuongThucOptions.select(cbPhuongThuc, PhuongThucOptions.PT1);
         cbCccd.setEnabled(true);
         cbMaNganh.setEnabled(true);
-        txtTtPhuongthuc.setEditable(true);
+        cbPhuongThuc.setEnabled(true);
         table.clearSelection();
     }
 
@@ -286,11 +292,13 @@ public class NguyenVongPanel extends JPanel {
                 selectComboItem(cbCccd, table.getValueAt(row, 1).toString());
                 selectComboItem(cbMaNganh, table.getValueAt(row, 2).toString());
                 txtNvTt.setText(table.getValueAt(row, 3).toString());
-                txtTtPhuongthuc.setText(table.getValueAt(row, 10).toString()); // Lưu ý index cột PT là 10
-                selectComboItem(cbMaToHop, table.getValueAt(row, 11) != null ? table.getValueAt(row, 11).toString() : ""); // Tố hợp index 11
+                PhuongThucOptions.select(cbPhuongThuc,
+                        table.getValueAt(row, 10) != null ? table.getValueAt(row, 10).toString() : "");
+                selectComboItem(cbMaToHop, table.getValueAt(row, 11) != null ? table.getValueAt(row, 11).toString() : "");
                 
-                // Khóa bộ 3 Key không cho sửa
-                cbCccd.setEnabled(false); cbMaNganh.setEnabled(false); txtTtPhuongthuc.setEditable(false);
+                cbCccd.setEnabled(false);
+                cbMaNganh.setEnabled(false);
+                cbPhuongThuc.setEnabled(false);
             }
         });
 
@@ -381,7 +389,8 @@ public class NguyenVongPanel extends JPanel {
             String maNganh = getSelectedValue(cbMaNganh);
             String maToHop = getSelectedValue(cbMaToHop);
 
-            if (cccd.isEmpty() || maNganh.isEmpty() || txtTtPhuongthuc.getText().trim().isEmpty()) {
+            String phuongThuc = PhuongThucOptions.getCode(cbPhuongThuc);
+            if (cccd.isEmpty() || maNganh.isEmpty() || phuongThuc.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ CCCD, Mã Ngành, Phương thức!");
                 return null;
             }
@@ -406,7 +415,7 @@ public class NguyenVongPanel extends JPanel {
             nv.setTsCccd(cccd);
             nv.setMaNganh(maNganh);
             nv.setThuTuNV(Integer.parseInt(txtNvTt.getText().trim()));
-            nv.setPhuongThuc(txtTtPhuongthuc.getText().trim());
+            nv.setPhuongThuc(phuongThuc);
             nv.setMaToHop(maToHop);
 
             // CÁC CỘT CÒN LẠI TỰ GÁN VỀ 0 HOẶC TRỐNG ĐỂ CHỜ THUẬT TOÁN TÍNH
@@ -438,7 +447,7 @@ public class NguyenVongPanel extends JPanel {
                     nv.setTsCccd(data[0].trim());
                     nv.setMaNganh(data[1].trim());
                     nv.setThuTuNV(data[2].trim().isEmpty() ? 99 : Integer.parseInt(data[2].trim()));
-                    nv.setPhuongThuc(data[3].trim());
+                    nv.setPhuongThuc(PhuongThucOptions.toCode(data[3]));
                     nv.setMaToHop(data[4].trim());
 
                     if (nv.getTsCccd().isEmpty() || nv.getMaNganh().isEmpty() || nv.getPhuongThuc().isEmpty()) {
@@ -477,5 +486,19 @@ public class NguyenVongPanel extends JPanel {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Lỗi CSV! Yêu cầu file có 5 cột: CCCD, Ngành, TT, PT, Tổ hợp");
         }
+    }
+
+    private static void addFormField(JPanel form, GridBagConstraints gbc, int row, int col,
+            String label, Component field) {
+        gbc.gridy = row;
+        gbc.gridx = col * 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        form.add(new JLabel(label), gbc);
+
+        gbc.gridx = col * 2 + 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        form.add(field, gbc);
     }
 }

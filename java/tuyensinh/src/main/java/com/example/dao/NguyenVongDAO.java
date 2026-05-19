@@ -10,7 +10,10 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import com.example.dto.DiemXetTuyenRow;
+import com.example.dto.ThongKeTrungTuyenRow;
+import com.example.dto.TrungTuyenRow;
 import com.example.entity.DiemThi;
+import com.example.entity.Nganh;
 import com.example.entity.NguyenVong;
 import com.example.entity.ThiSinh;
 import com.example.entity.ToHopMon;
@@ -259,6 +262,122 @@ public class NguyenVongDAO {
         return buildDiemXetTuyenRows(keyword).size();
     }
 
+    /** Danh sách NV trúng tuyển; maNganh null/rỗng = tất cả ngành. */
+    public List<TrungTuyenRow> listTrungTuyenByNganh(String maNganh) {
+        String ma = maNganh == null ? "" : maNganh.trim();
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            StringBuilder hql = new StringBuilder(
+                    "SELECT nv, ts, ng FROM NguyenVong nv, ThiSinh ts, Nganh ng " +
+                    "WHERE nv.tsCccd = ts.cccd AND nv.maNganh = ng.manganh " +
+                    "AND nv.ketQua LIKE :trung ");
+            if (!ma.isEmpty()) {
+                hql.append("AND nv.maNganh = :maNganh ");
+            }
+            hql.append("ORDER BY nv.maNganh, nv.diemXetTuyen DESC, nv.thuTuNV ASC");
+
+            Query<Object[]> q = session.createQuery(hql.toString(), Object[].class);
+            q.setParameter("trung", "%TRÚNG%");
+            if (!ma.isEmpty()) {
+                q.setParameter("maNganh", ma);
+            }
+
+            List<Object[]> raw = q.list();
+            List<TrungTuyenRow> rows = new ArrayList<>();
+            if (raw == null) {
+                return rows;
+            }
+            for (Object[] o : raw) {
+                NguyenVong nv = (NguyenVong) o[0];
+                ThiSinh ts = (ThiSinh) o[1];
+                Nganh ng = (Nganh) o[2];
+                TrungTuyenRow row = new TrungTuyenRow();
+                row.setCccd(nv.getTsCccd());
+                row.setHo(ts.getHo() != null ? ts.getHo() : "");
+                row.setTen(ts.getTen() != null ? ts.getTen() : "");
+                row.setThuTuNv(nv.getThuTuNV());
+                row.setMaNganh(nv.getMaNganh());
+                row.setTenNganh(ng.getTennganh() != null ? ng.getTennganh() : "");
+                row.setPhuongThuc(nv.getPhuongThuc());
+                row.setMaToHop(nv.getMaToHop());
+                row.setThm(nv.getDiemThxt());
+                row.setDiemXetTuyen(nv.getDiemXetTuyen());
+                row.setKetQua(nv.getKetQua());
+                rows.add(row);
+            }
+            return rows;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /** Thống kê số trúng theo PT và chỉ tiêu từng ngành. */
+    public List<ThongKeTrungTuyenRow> thongKeTrungTuyenTheoNganh() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            List<Nganh> nganhs = session.createQuery("FROM Nganh ng ORDER BY ng.manganh", Nganh.class).list();
+            List<NguyenVong> trungList = session.createQuery(
+                    "FROM NguyenVong nv WHERE nv.ketQua LIKE :trung ORDER BY nv.maNganh",
+                    NguyenVong.class)
+                    .setParameter("trung", "%TRÚNG%")
+                    .list();
+
+            List<ThongKeTrungTuyenRow> result = new ArrayList<>();
+            if (nganhs == null) {
+                return result;
+            }
+
+            for (Nganh ng : nganhs) {
+                if (ng.getManganh() == null) {
+                    continue;
+                }
+                int pt1 = 0, pt2 = 0, pt3 = 0;
+                if (trungList != null) {
+                    for (NguyenVong nv : trungList) {
+                        if (!ng.getManganh().equals(nv.getMaNganh())) {
+                            continue;
+                        }
+                        String loai = XetTuyenService.resolveLoaiXetTuyen(nv.getPhuongThuc());
+                        if ("DGNL".equals(loai)) {
+                            pt2++;
+                        } else if ("VSAT".equals(loai)) {
+                            pt3++;
+                        } else {
+                            pt1++;
+                        }
+                    }
+                }
+
+                ThongKeTrungTuyenRow row = new ThongKeTrungTuyenRow();
+                row.setMaNganh(ng.getManganh());
+                row.setTenNganh(ng.getTennganh() != null ? ng.getTennganh() : "");
+                row.setChiTieu(ng.getnChitieu() != null ? ng.getnChitieu() : 0);
+                row.setTrungPt1(pt1);
+                row.setTrungPt2(pt2);
+                row.setTrungPt3(pt3);
+                row.setTongTrung(pt1 + pt2 + pt3);
+                row.setSlThptCt(parseSlThpt(ng.getSlThpt()));
+                row.setSlDgnlCt(ng.getSlDgnl() != null ? ng.getSlDgnl() : 0);
+                row.setSlVsatCt(ng.getSlVsat() != null ? ng.getSlVsat() : 0);
+                result.add(row);
+            }
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    private static int parseSlThpt(String slThpt) {
+        if (slThpt == null || slThpt.trim().isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(slThpt.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     public List<DiemXetTuyenRow> getDiemXetTuyenPage(int page, int pageSize, String keyword) {
         List<DiemXetTuyenRow> all = buildDiemXetTuyenRows(keyword);
         if (all.isEmpty()) {
@@ -307,15 +426,31 @@ public class NguyenVongDAO {
             return dt.getNl1() != null ? formatNum(dt.getNl1()) : "—";
         }
         if ("VSAT".equals(loai)) {
-            if (dt.getNk1() != null && dt.getNk1() > 0) {
-                return formatNum(dt.getNk1());
-            }
-            if (dt.getNk2() != null && dt.getNk2() > 0) {
-                return formatNum(dt.getNk2());
-            }
-            return "—";
+            return formatVsatDiemGoc(dt);
         }
         return "—";
+    }
+
+    private static String formatVsatDiemGoc(DiemThi dt) {
+        StringBuilder sb = new StringBuilder();
+        appendVsatPart(sb, "TO", dt.getVsatTo());
+        appendVsatPart(sb, "LI", dt.getVsatLi());
+        appendVsatPart(sb, "HO", dt.getVsatHo());
+        appendVsatPart(sb, "SI", dt.getVsatSi());
+        appendVsatPart(sb, "SU", dt.getVsatSu());
+        appendVsatPart(sb, "DI", dt.getVsatDi());
+        appendVsatPart(sb, "VA", dt.getVsatVa());
+        appendVsatPart(sb, "N1", dt.getVsatN1());
+        return sb.length() == 0 ? "—" : sb.toString();
+    }
+
+    private static void appendVsatPart(StringBuilder sb, String mon, Double diem) {
+        if (diem != null && diem > 0) {
+            if (sb.length() > 0) {
+                sb.append(", ");
+            }
+            sb.append(mon).append(":").append(formatNum(diem));
+        }
     }
 
     private static String formatNum(double v) {
