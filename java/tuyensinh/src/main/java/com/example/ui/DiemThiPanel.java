@@ -5,7 +5,9 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,6 +22,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -38,6 +41,10 @@ import com.example.entity.DiemThi;
 import com.example.entity.ThiSinh;
 
 public class DiemThiPanel extends JPanel {
+
+    /** Độ rộng chuẩn cho ô nhập điểm và combo trên form. */
+    private static final int INPUT_COLS = 8;
+
     private JTable table;
     private JScrollPane tableScroll;
     private DefaultTableModel tableModel;
@@ -45,11 +52,12 @@ public class DiemThiPanel extends JPanel {
     private ThiSinhDAO thiSinhDAO;
 
     // Khai báo gần 20 trường dữ liệu
-    private JTextField txtId, txtSbd, txtPhuongThuc;
-    private JComboBox<String> cbCccd;
+    private JTextField txtId, txtSbd;
+    private JComboBox<String> cbCccd, cbPhuongThuc;
     private JTextField txtTo, txtLi, txtHo, txtSi, txtSu, txtDi, txtVa;
     private JTextField txtN1Thi, txtN1Cc, txtCncn, txtCnnn, txtTi, txtKtpl;
     private JTextField txtNl1, txtNk1, txtNk2;
+    private JTextField txtVsatTo, txtVsatLi, txtVsatHo, txtVsatSi, txtVsatSu, txtVsatDi, txtVsatVa, txtVsatN1;
     private JButton btnAdd, btnUpdate, btnDelete, btnClear, btnImport, btnThongKe; // Thêm btnThongKe
     private final Map<String, String> cccdToSbd = new HashMap<>();
 
@@ -59,16 +67,18 @@ public class DiemThiPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // --- 1. FORM NHẬP LIỆU
-        JPanel formPanel = new JPanel(new GridLayout(7, 6, 8, 8));
-        formPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        // --- 1. FORM NHẬP LIỆU (GridBag — ô hẹp, không kéo giãn full width)
+        JPanel formWrapper = new JPanel(new BorderLayout(0, 8));
+        formWrapper.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Bảng Điểm Thí Sinh"),
+                new EmptyBorder(8, 12, 8, 12)));
 
-        // Khởi tạo và add các trường theo từng cặp (Label + TextField)
         cbCccd = new JComboBox<>();
         txtSbd = new JTextField();
         txtSbd.setEditable(false);
         txtSbd.setBackground(new Color(235, 235, 235));
-        txtPhuongThuc = new JTextField();
+        cbPhuongThuc = PhuongThucOptions.newCombo();
+
         txtTo = new JTextField();
         txtLi = new JTextField();
         txtHo = new JTextField();
@@ -85,69 +95,69 @@ public class DiemThiPanel extends JPanel {
         txtNl1 = new JTextField();
         txtNk1 = new JTextField();
         txtNk2 = new JTextField();
+        txtVsatTo = new JTextField();
+        txtVsatLi = new JTextField();
+        txtVsatHo = new JTextField();
+        txtVsatSi = new JTextField();
+        txtVsatSu = new JTextField();
+        txtVsatDi = new JTextField();
+        txtVsatVa = new JTextField();
+        txtVsatN1 = new JTextField();
+        narrowScoreFields(txtTo, txtLi, txtHo, txtSi, txtSu, txtDi, txtVa,
+                txtN1Thi, txtN1Cc, txtCncn, txtCnnn, txtTi, txtKtpl, txtNl1, txtNk1, txtNk2,
+                txtVsatTo, txtVsatLi, txtVsatHo, txtVsatSi, txtVsatSu, txtVsatDi, txtVsatVa, txtVsatN1);
+        syncInputWidth(txtSbd, cbCccd, cbPhuongThuc);
+
         txtId = new JTextField();
         txtId.setVisible(false);
 
-        // Dòng 1: Thông tin chung
-        formPanel.add(new JLabel("CCCD (*):"));
-        formPanel.add(cbCccd);
-        formPanel.add(new JLabel("Số báo danh:"));
-        formPanel.add(txtSbd);
-        formPanel.add(new JLabel("Phương thức:"));
-        formPanel.add(txtPhuongThuc);
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 8, 4, 8);
+        gbc.anchor = GridBagConstraints.WEST;
 
-        // Dòng 2: Môn tự nhiên
-        formPanel.add(new JLabel("Toán:"));
-        formPanel.add(txtTo);
-        formPanel.add(new JLabel("Vật lý:"));
-        formPanel.add(txtLi);
-        formPanel.add(new JLabel("Hóa học:"));
-        formPanel.add(txtHo);
+        addFormField(formPanel, gbc, 0, 0, "CCCD (*):", cbCccd);
+        addFormField(formPanel, gbc, 0, 1, "Số báo danh:", txtSbd);
+        addFormField(formPanel, gbc, 0, 2, "Phương thức (*):", cbPhuongThuc);
+        addFormField(formPanel, gbc, 1, 0, "Toán:", txtTo);
+        addFormField(formPanel, gbc, 1, 1, "Vật lý:", txtLi);
+        addFormField(formPanel, gbc, 1, 2, "Hóa học:", txtHo);
+        addFormField(formPanel, gbc, 2, 0, "Sinh học:", txtSi);
+        addFormField(formPanel, gbc, 2, 1, "Lịch sử:", txtSu);
+        addFormField(formPanel, gbc, 2, 2, "Địa lý:", txtDi);
+        addFormField(formPanel, gbc, 3, 0, "Ngữ văn:", txtVa);
+        addFormField(formPanel, gbc, 3, 1, "N1_THI (T.Anh gốc):", txtN1Thi);
+        addFormField(formPanel, gbc, 3, 2, "N1_CC (T.Anh C/C):", txtN1Cc);
+        addFormField(formPanel, gbc, 4, 0, "CNCN:", txtCncn);
+        addFormField(formPanel, gbc, 4, 1, "CNNN:", txtCnnn);
+        addFormField(formPanel, gbc, 4, 2, "Tin học:", txtTi);
+        addFormField(formPanel, gbc, 5, 0, "KTPL:", txtKtpl);
+        addFormField(formPanel, gbc, 5, 1, "NL1 (ĐGNL):", txtNl1);
+        addFormField(formPanel, gbc, 5, 2, "Năng khiếu 1:", txtNk1);
+        addFormField(formPanel, gbc, 6, 0, "Năng khiếu 2:", txtNk2);
 
-        // Dòng 3: Môn xã hội
-        formPanel.add(new JLabel("Sinh học:"));
-        formPanel.add(txtSi);
-        formPanel.add(new JLabel("Lịch sử:"));
-        formPanel.add(txtSu);
-        formPanel.add(new JLabel("Địa lý:"));
-        formPanel.add(txtDi);
+        JPanel vsatPanel = new JPanel(new GridBagLayout());
+        vsatPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
+        GridBagConstraints gbcV = new GridBagConstraints();
+        gbcV.insets = new Insets(4, 8, 4, 8);
+        gbcV.anchor = GridBagConstraints.WEST;
+        // 3 cột: 3 + 3 + 2 dòng (cột phải 2 ô)
+        addFormField(vsatPanel, gbcV, 0, 0, "VSAT Toán (150):", txtVsatTo);
+        addFormField(vsatPanel, gbcV, 0, 1, "VSAT Lý:", txtVsatLi);
+        addFormField(vsatPanel, gbcV, 0, 2, "VSAT Văn:", txtVsatVa);
+        addFormField(vsatPanel, gbcV, 1, 0, "VSAT Hóa:", txtVsatHo);
+        addFormField(vsatPanel, gbcV, 1, 1, "VSAT Sinh:", txtVsatSi);
+        addFormField(vsatPanel, gbcV, 1, 2, "VSAT Anh:", txtVsatN1);
+        addFormField(vsatPanel, gbcV, 2, 0, "VSAT Sử:", txtVsatSu);
+        addFormField(vsatPanel, gbcV, 2, 1, "VSAT Địa:", txtVsatDi);
 
-        // Dòng 4: Ngữ văn & Tiếng Anh
-        formPanel.add(new JLabel("Ngữ văn:"));
-        formPanel.add(txtVa);
-        formPanel.add(new JLabel("N1_THI (T.Anh gốc):"));
-        formPanel.add(txtN1Thi);
-        formPanel.add(new JLabel("N1_CC (T.Anh C/C):"));
-        formPanel.add(txtN1Cc);
+        formWrapper.add(formPanel, BorderLayout.CENTER);
+        JPanel vsatWrap = new JPanel(new BorderLayout());
+        vsatWrap.add(vsatPanel, BorderLayout.WEST);
+        vsatWrap.setBorder(BorderFactory.createTitledBorder("Điểm VSAT (thang 150) — PT3"));
+        formWrapper.add(vsatWrap, BorderLayout.SOUTH);
 
-        // Dòng 5: GDCD & Ngoại ngữ khác
-        formPanel.add(new JLabel("CNCN:"));
-        formPanel.add(txtCncn);
-        formPanel.add(new JLabel("CNNN:"));
-        formPanel.add(txtCnnn);
-        formPanel.add(new JLabel("Tin học:"));
-        formPanel.add(txtTi);
-
-        // Dòng 6: Các môn khác
-        formPanel.add(new JLabel("KTPL:"));
-        formPanel.add(txtKtpl);
-        formPanel.add(new JLabel("NL1 (ĐGNL):"));
-        formPanel.add(txtNl1);
-        formPanel.add(new JLabel("Năng khiếu 1:"));
-        formPanel.add(txtNk1);
-
-        // Dòng 7: NK2 & ID ẩn
-        formPanel.add(new JLabel("Năng khiếu 2:"));
-        formPanel.add(txtNk2);
-        formPanel.add(new JLabel(""));
-        formPanel.add(new JLabel(""));
-        formPanel.add(new JLabel(""));
-        formPanel.add(new JLabel(""));
-
-        JScrollPane formScroll = new JScrollPane(formPanel);
-        formScroll.setBorder(BorderFactory.createTitledBorder("Bảng Điểm Thí Sinh"));
-        formScroll.setViewportBorder(null);
-        add(formScroll, BorderLayout.NORTH);
+        add(formWrapper, BorderLayout.NORTH);
 
         // --- 2. THANH CÔNG CỤ ---
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
@@ -175,7 +185,8 @@ public class DiemThiPanel extends JPanel {
 
         // --- 3. BẢNG DỮ LIỆU ---
         String[] columns = { "ID", "CCCD", "SBD", "PT", "Toán", "Lý", "Hóa", "Sinh", "Sử", "Địa", "Văn", "N1_Thi",
-                "N1_CC", "CNCN", "CNNN", "Tin", "KTPL", "NL1", "NK1", "NK2" };
+                "N1_CC", "CNCN", "CNNN", "Tin", "KTPL", "NL1", "NK1", "NK2",
+                "V-TO", "V-LI", "V-HO", "V-SI", "V-SU", "V-DI", "V-VA", "V-N1" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -190,6 +201,7 @@ public class DiemThiPanel extends JPanel {
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                     boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                UiTableTheme.applyColumnAlignment(table, c, column);
                 UiTableTheme.applyDataRowAppearance(table, c, row, isSelected);
                 return c;
             }
@@ -285,7 +297,9 @@ public class DiemThiPanel extends JPanel {
                         d.getIddiemthi(), d.getCccd(), d.getSobaodanh(), d.getdPhuongthuc(),
                         d.getDiemToan(), d.getDiemLy(), d.getDiemHoa(), d.getDiemSinh(),
                         d.getDiemSu(), d.getDiemDia(), d.getDiemVan(), d.getN1Thi(), d.getN1Cc(),
-                        d.getCncn(), d.getCnnn(), d.getDiemTin(), d.getKtpl(), d.getNl1(), d.getNk1(), d.getNk2()
+                        d.getCncn(), d.getCnnn(), d.getDiemTin(), d.getKtpl(), d.getNl1(), d.getNk1(), d.getNk2(),
+                        d.getVsatTo(), d.getVsatLi(), d.getVsatHo(), d.getVsatSi(), d.getVsatSu(),
+                        d.getVsatDi(), d.getVsatVa(), d.getVsatN1()
                 });
             }
         }
@@ -318,7 +332,7 @@ public class DiemThiPanel extends JPanel {
         DiemThi d = new DiemThi();
         d.setCccd(getSelectedCccd());
         d.setSobaodanh(txtSbd.getText().trim());
-        d.setdPhuongthuc(txtPhuongThuc.getText().trim());
+        d.setdPhuongthuc(PhuongThucOptions.getCode(cbPhuongThuc));
 
         d.setDiemToan(parseDouble(txtTo.getText()));
         d.setDiemLy(parseDouble(txtLi.getText()));
@@ -336,6 +350,14 @@ public class DiemThiPanel extends JPanel {
         d.setNl1(parseDouble(txtNl1.getText()));
         d.setNk1(parseDouble(txtNk1.getText()));
         d.setNk2(parseDouble(txtNk2.getText()));
+        d.setVsatTo(parseDouble(txtVsatTo.getText()));
+        d.setVsatLi(parseDouble(txtVsatLi.getText()));
+        d.setVsatHo(parseDouble(txtVsatHo.getText()));
+        d.setVsatSi(parseDouble(txtVsatSi.getText()));
+        d.setVsatSu(parseDouble(txtVsatSu.getText()));
+        d.setVsatDi(parseDouble(txtVsatDi.getText()));
+        d.setVsatVa(parseDouble(txtVsatVa.getText()));
+        d.setVsatN1(parseDouble(txtVsatN1.getText()));
         return d;
     }
 
@@ -343,7 +365,7 @@ public class DiemThiPanel extends JPanel {
         txtId.setText("");
         cbCccd.setSelectedIndex(0);
         txtSbd.setText("");
-        txtPhuongThuc.setText("");
+        PhuongThucOptions.select(cbPhuongThuc, PhuongThucOptions.PT1);
         txtTo.setText("");
         txtLi.setText("");
         txtHo.setText("");
@@ -360,6 +382,14 @@ public class DiemThiPanel extends JPanel {
         txtNl1.setText("");
         txtNk1.setText("");
         txtNk2.setText("");
+        txtVsatTo.setText("");
+        txtVsatLi.setText("");
+        txtVsatHo.setText("");
+        txtVsatSi.setText("");
+        txtVsatSu.setText("");
+        txtVsatDi.setText("");
+        txtVsatVa.setText("");
+        txtVsatN1.setText("");
         cbCccd.setEnabled(true);
         table.clearSelection();
     }
@@ -374,7 +404,7 @@ public class DiemThiPanel extends JPanel {
                 txtId.setText(getValue(row, 0));
                 selectCccd(getValue(row, 1));
                 txtSbd.setText(getValue(row, 2));
-                txtPhuongThuc.setText(getValue(row, 3));
+                PhuongThucOptions.select(cbPhuongThuc, getValue(row, 3));
                 txtTo.setText(getValue(row, 4));
                 txtLi.setText(getValue(row, 5));
                 txtHo.setText(getValue(row, 6));
@@ -391,6 +421,14 @@ public class DiemThiPanel extends JPanel {
                 txtNl1.setText(getValue(row, 17));
                 txtNk1.setText(getValue(row, 18));
                 txtNk2.setText(getValue(row, 19));
+                txtVsatTo.setText(getValue(row, 20));
+                txtVsatLi.setText(getValue(row, 21));
+                txtVsatHo.setText(getValue(row, 22));
+                txtVsatSi.setText(getValue(row, 23));
+                txtVsatSu.setText(getValue(row, 24));
+                txtVsatDi.setText(getValue(row, 25));
+                txtVsatVa.setText(getValue(row, 26));
+                txtVsatN1.setText(getValue(row, 27));
                 cbCccd.setEnabled(false);
             }
         });
@@ -628,7 +666,7 @@ public class DiemThiPanel extends JPanel {
                 DiemThi d = new DiemThi();
                 d.setCccd(cccd);
                 d.setSobaodanh(getSafeString(data, 1));
-                d.setdPhuongthuc(getSafeString(data, 2));
+                d.setdPhuongthuc(PhuongThucOptions.toCode(getSafeString(data, 2)));
                 d.setDiemToan(getSafeDouble(data, 3));
                 d.setDiemLy(getSafeDouble(data, 4));
                 d.setDiemHoa(getSafeDouble(data, 5));
@@ -673,5 +711,50 @@ public class DiemThiPanel extends JPanel {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Lỗi đọc file CSV: " + ex.getMessage());
         }
+    }
+
+    private static void narrowScoreFields(JTextField... fields) {
+        for (JTextField f : fields) {
+            f.setColumns(INPUT_COLS);
+            applyInputSize(f);
+        }
+    }
+
+    private static void syncInputWidth(JComponent... components) {
+        for (JComponent c : components) {
+            if (c instanceof JTextField) {
+                ((JTextField) c).setColumns(INPUT_COLS);
+            }
+            applyInputSize(c);
+        }
+    }
+
+    private static Dimension inputFieldSize() {
+        return new JTextField(INPUT_COLS).getPreferredSize();
+    }
+
+    private static void applyInputSize(JComponent c) {
+        Dimension size = inputFieldSize();
+        c.setPreferredSize(size);
+        c.setMinimumSize(size);
+        c.setMaximumSize(size);
+    }
+
+    private static void addFormField(JPanel form, GridBagConstraints gbc, int row, int col,
+            String label, Component field) {
+        if (field instanceof JComponent) {
+            applyInputSize((JComponent) field);
+        }
+        gbc.gridy = row;
+        gbc.gridx = col * 2;
+        gbc.weightx = 0;
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        form.add(new JLabel(label), gbc);
+
+        gbc.gridx = col * 2 + 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        form.add(field, gbc);
     }
 }

@@ -33,6 +33,15 @@ public class DiemThi {
     @Column(name = "CNNN") private Double cnnn;
     @Column(name = "TI") private Double diemTin;
     @Column(name = "KTPL") private Double ktpl;
+
+    @Column(name = "VSAT_TO") private Double vsatTo;
+    @Column(name = "VSAT_LI") private Double vsatLi;
+    @Column(name = "VSAT_HO") private Double vsatHo;
+    @Column(name = "VSAT_SI") private Double vsatSi;
+    @Column(name = "VSAT_SU") private Double vsatSu;
+    @Column(name = "VSAT_DI") private Double vsatDi;
+    @Column(name = "VSAT_VA") private Double vsatVa;
+    @Column(name = "VSAT_N1") private Double vsatN1;
     
     @Column(name = "NL1") private Double nl1; // Điểm Đánh giá năng lực
     
@@ -76,6 +85,23 @@ public class DiemThi {
     public void setDiemTin(Double diemTin) { this.diemTin = diemTin; }
     public Double getKtpl() { return ktpl; }
     public void setKtpl(Double ktpl) { this.ktpl = ktpl; }
+
+    public Double getVsatTo() { return vsatTo; }
+    public void setVsatTo(Double vsatTo) { this.vsatTo = vsatTo; }
+    public Double getVsatLi() { return vsatLi; }
+    public void setVsatLi(Double vsatLi) { this.vsatLi = vsatLi; }
+    public Double getVsatHo() { return vsatHo; }
+    public void setVsatHo(Double vsatHo) { this.vsatHo = vsatHo; }
+    public Double getVsatSi() { return vsatSi; }
+    public void setVsatSi(Double vsatSi) { this.vsatSi = vsatSi; }
+    public Double getVsatSu() { return vsatSu; }
+    public void setVsatSu(Double vsatSu) { this.vsatSu = vsatSu; }
+    public Double getVsatDi() { return vsatDi; }
+    public void setVsatDi(Double vsatDi) { this.vsatDi = vsatDi; }
+    public Double getVsatVa() { return vsatVa; }
+    public void setVsatVa(Double vsatVa) { this.vsatVa = vsatVa; }
+    public Double getVsatN1() { return vsatN1; }
+    public void setVsatN1(Double vsatN1) { this.vsatN1 = vsatN1; }
     
     public Double getNl1() { return nl1; }
     public void setNl1(Double nl1) { this.nl1 = nl1; }

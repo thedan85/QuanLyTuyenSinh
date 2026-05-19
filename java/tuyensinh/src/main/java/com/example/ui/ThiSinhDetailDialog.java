@@ -64,7 +64,13 @@ public class ThiSinhDetailDialog extends JDialog {
                 sb.append("\n2. Điểm thi ĐGNL:\n");
                 sb.append(" - Điểm ĐGNL (NL1): ").append(d.getNl1() != null ? d.getNl1() : "Không có").append("\n");
 
-                sb.append("\n3. Điểm VSAT / Năng khiếu (Nếu có):\n");
+                sb.append("\n3. Điểm VSAT (thang 150 — PT3):\n");
+                sb.append(String.format(" - Toán: %s | Lý: %s | Hóa: %s | Sinh: %s\n",
+                        fmt(d.getVsatTo()), fmt(d.getVsatLi()), fmt(d.getVsatHo()), fmt(d.getVsatSi())));
+                sb.append(String.format(" - Sử: %s | Địa: %s | Văn: %s | Anh: %s\n",
+                        fmt(d.getVsatSu()), fmt(d.getVsatDi()), fmt(d.getVsatVa()), fmt(d.getVsatN1())));
+
+                sb.append("\n4. Năng khiếu (nếu có):\n");
                 sb.append(" - NK1: ").append(d.getNk1() != null ? d.getNk1() : "Không có").append("\n");
                 sb.append(" - NK2: ").append(d.getNk2() != null ? d.getNk2() : "Không có").append("\n");
             }
@@ -80,5 +86,9 @@ public class ThiSinhDetailDialog extends JDialog {
         btnClose.addActionListener(e -> dispose());
         bottomPanel.add(btnClose);
         add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private static String fmt(Double v) {
+        return v != null ? String.valueOf(v) : "—";
     }
 }

@@ -140,19 +140,16 @@ public class TraCuuPanel extends JPanel {
     }
 
     private static void centerAllColumnsAndHighlightResult(JTable table) {
-        int resultCol = table.getColumnCount() - 1;
         for (int i = 0; i < table.getColumnCount(); i++) {
-            final int col = i;
             table.getColumnModel().getColumn(i).setCellRenderer(new DefaultTableCellRenderer() {
                 @Override
                 public Component getTableCellRendererComponent(JTable t, Object value, boolean isSelected,
                         boolean hasFocus, int row, int column) {
                     Component c = super.getTableCellRendererComponent(t, value, isSelected, hasFocus, row, column);
-                    if (c instanceof JLabel jl) {
-                        jl.setHorizontalAlignment(SwingConstants.CENTER);
-                    }
+                    UiTableTheme.applyColumnAlignment(t, c, column);
                     UiTableTheme.applyDataRowAppearance(t, c, row, isSelected);
-                    if (!isSelected && col == resultCol && value != null) {
+                    String colName = t.getColumnName(column);
+                    if (!isSelected && colName != null && colName.toLowerCase().contains("kết quả") && value != null) {
                         String s = value.toString().toUpperCase();
                         if (s.contains("TRÚNG TUYỂN")) {
                             c.setForeground(new Color(22, 163, 74));

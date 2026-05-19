@@ -58,6 +58,7 @@ public class AdminFrame extends JFrame {
         addNav(deck, labels, icons, cardIds, new ThiSinhPanel(), "ts", "Quản lý Thí sinh", "👤");
         addNav(deck, labels, icons, cardIds, new BangQuyDoiPanel(), "bqd", "Quản lý Bảng quy đổi", "📊");
         addNav(deck, labels, icons, cardIds, new DiemThiPanel(), "dt", "Quản lý Điểm thi", "📝");
+        addNav(deck, labels, icons, cardIds, new DiemXetTuyenPanel(), "dxt", "Điểm xét tuyển", "📈");
         addNav(deck, labels, icons, cardIds, new DiemCongPanel(), "dc", "Quản lý Điểm cộng", "⭐");
 
         JButton btnLogout = SidebarUi.createOutlineLogoutButton();

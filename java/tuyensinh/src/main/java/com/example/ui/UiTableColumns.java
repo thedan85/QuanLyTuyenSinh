@@ -21,6 +21,8 @@ import java.util.Objects;
 public final class UiTableColumns {
 
     private static final String KEY_SCROLL = "UiTableColumns.scroll";
+    /** Đặt {@code Boolean.TRUE} trên JTable để tắt tooltip ô. */
+    public static final String KEY_NO_CELL_TOOLTIPS = "UiTableColumns.noCellToolTips";
     private static final String KEY_CELL_PAD_SCALE = "UiTableTheme.cellPaddingScale";
     private static final int SAMPLE_ROWS = 50;
     /** Cộng vào độ rộng đo (tương ứng padding trái+phải ô trong {@link UiTableTheme}). */
@@ -161,6 +163,9 @@ public final class UiTableColumns {
     }
 
     private static void attachCellToolTips(JTable table) {
+        if (Boolean.TRUE.equals(table.getClientProperty(KEY_NO_CELL_TOOLTIPS))) {
+            return;
+        }
         ToolTipManager.sharedInstance().registerComponent(table);
         table.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
@@ -173,15 +178,40 @@ public final class UiTableColumns {
                     return;
                 }
                 Object v = table.getValueAt(row, col);
-                String s = v == null ? "" : v.toString();
+                String s = v == null ? "" : v.toString().trim();
                 if (s.isEmpty()) {
                     table.setToolTipText(null);
                     return;
                 }
-                String html = "<html><body style='width:380px;font-size:11pt'>" + escapeHtml(s) + "</body></html>";
-                table.setToolTipText(html);
+                if (!isCellTextTruncated(table, row, col, s)) {
+                    table.setToolTipText(null);
+                    return;
+                }
+                table.setToolTipText(s.length() > 80
+                        ? "<html><body style='max-width:360px'>" + escapeHtml(s) + "</body></html>"
+                        : s);
             }
         });
+    }
+
+    /** Chỉ hiện tooltip khi chữ không đủ chỗ trong ô (tránh popup trùng nội dung ô). */
+    private static boolean isCellTextTruncated(JTable table, int row, int col, String text) {
+        Rectangle rect = table.getCellRect(row, col, false);
+        if (rect.width <= 0) {
+            return false;
+        }
+        Component comp = table.prepareRenderer(table.getCellRenderer(row, col), row, col);
+        int pad = 8;
+        if (comp instanceof JComponent jc) {
+            Insets in = jc.getInsets();
+            pad = in.left + in.right + 4;
+        }
+        int avail = rect.width - pad;
+        if (avail <= 0) {
+            return true;
+        }
+        FontMetrics fm = comp.getFontMetrics(comp.getFont());
+        return fm.stringWidth(text) > avail;
     }
 
     private static String escapeHtml(String s) {
