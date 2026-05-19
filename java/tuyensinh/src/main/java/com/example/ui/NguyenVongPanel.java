@@ -7,6 +7,8 @@ import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import javax.swing.BoxLayout;
+import javax.swing.border.TitledBorder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -49,7 +51,8 @@ public class NguyenVongPanel extends JPanel {
     private JTextField txtTtPhuongthuc;
     private JComboBox<String> cbCccd, cbMaNganh, cbMaToHop;
 
-    private JButton btnAdd, btnEdit, btnDelete, btnRefresh, btnImport, btnRunAlgo;
+    private JButton btnAdd, btnEdit, btnDelete, btnRefresh, btnImport;
+    private JButton btnRunAlgo, btnDanhSachTrung, btnThongKeTrung;
 
     public NguyenVongPanel() {
         dao = new NguyenVongDAO();
@@ -87,27 +90,46 @@ public class NguyenVongPanel extends JPanel {
         formScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         add(formScroll, BorderLayout.NORTH);
 
-        // --- 2. THANH CÔNG CỤ ---
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        // --- 2. THANH CÔNG CỤ (2 hàng: CRUD + Xét tuyển) ---
+        JPanel crudBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         btnAdd = new JButton("Thêm mới");
         btnEdit = new JButton("Sửa");
         btnDelete = new JButton("Xóa");
         btnRefresh = new JButton("Làm mới form");
         btnImport = new JButton("Import CSV");
-        
-        btnRunAlgo = new JButton("🚀 CHẠY XÉT TUYỂN");
-
-        btnPanel.add(btnAdd); btnPanel.add(btnEdit); btnPanel.add(btnDelete);
-        btnPanel.add(btnRefresh); btnPanel.add(btnImport);
-        btnPanel.add(new JLabel(" | "));
-        btnPanel.add(btnRunAlgo);
+        crudBar.add(btnAdd);
+        crudBar.add(btnEdit);
+        crudBar.add(btnDelete);
+        crudBar.add(btnRefresh);
+        crudBar.add(btnImport);
         UiButtons.stylePrimary(btnAdd);
         UiButtons.stylePrimary(btnEdit);
         UiButtons.styleSecondary(btnImport);
-        UiButtons.stylePrimary(btnRunAlgo);
         UiButtons.styleDanger(btnDelete);
         UiButtons.styleSecondary(btnRefresh);
-        UiButtons.equalizeHeightsOnly(btnAdd, btnEdit, btnDelete, btnRefresh, btnImport, btnRunAlgo);
+        UiButtons.equalizeHeightsOnly(btnAdd, btnEdit, btnDelete, btnRefresh, btnImport);
+
+        JPanel xetBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
+        xetBar.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(226, 232, 240)),
+                "Thao tác xét tuyển",
+                TitledBorder.LEFT,
+                TitledBorder.TOP));
+        btnRunAlgo = new JButton("🚀 CHẠY XÉT TUYỂN");
+        btnDanhSachTrung = new JButton("Danh sách trúng tuyển");
+        btnThongKeTrung = new JButton("Thống kê trúng tuyển");
+        xetBar.add(btnRunAlgo);
+        xetBar.add(btnDanhSachTrung);
+        xetBar.add(btnThongKeTrung);
+        UiButtons.stylePrimary(btnRunAlgo);
+        UiButtons.styleSecondary(btnDanhSachTrung);
+        UiButtons.styleSecondary(btnThongKeTrung);
+        UiButtons.equalizeHeightsOnly(btnRunAlgo, btnDanhSachTrung, btnThongKeTrung);
+
+        JPanel toolNorth = new JPanel();
+        toolNorth.setLayout(new BoxLayout(toolNorth, BoxLayout.Y_AXIS));
+        toolNorth.add(crudBar);
+        toolNorth.add(xetBar);
 
         // --- 3. BẢNG DỮ LIỆU (VẪN GIỮ ĐỦ 12 CỘT ĐỂ XEM KẾT QUẢ) ---
         String[] cols = { "ID", "CCCD", "Mã Ngành", "Thứ tự", "Điểm THXT", "Điểm UTQD", "Cộng", "Tổng Điểm", "Kết quả", "Keys", "PT", "Tổ hợp" };
@@ -142,7 +164,7 @@ public class NguyenVongPanel extends JPanel {
         UiTableColumns.install(table, tableScroll);
 
         JPanel centerContainer = new JPanel(new BorderLayout());
-        centerContainer.add(btnPanel, BorderLayout.NORTH);
+        centerContainer.add(toolNorth, BorderLayout.NORTH);
         centerContainer.add(tableScroll, BorderLayout.CENTER);
         add(centerContainer, BorderLayout.CENTER);
 
@@ -327,11 +349,15 @@ public class NguyenVongPanel extends JPanel {
             }
         });
 
-        // TÍCH HỢP GỌI SERVICE Ở ĐÂY
+        btnDanhSachTrung.addActionListener(e -> TrungTuyenTheoNganhDialog.showDialog(this));
+        btnThongKeTrung.addActionListener(e -> ThongKeTrungTuyenDialog.showDialog(this));
+
         btnRunAlgo.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                "Hệ thống sẽ móc nối điểm thi, điểm cộng và tự động tính toán trúng tuyển cho TẤT CẢ nguyện vọng.\nTiếp tục?", 
-                "Xác nhận Xét Tuyển", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Tính lại điểm và xét trúng/rớt cho tất cả nguyện vọng. Tiếp tục?",
+                "Xác nhận Xét Tuyển",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
                     setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
