@@ -119,6 +119,10 @@ CREATE TABLE `xt_diemthixettuyen` (
   `NL1` decimal(8,2) DEFAULT NULL,
   `NK1` decimal(8,2) DEFAULT NULL,
   `NK2` decimal(8,2) DEFAULT NULL,
+  `NK3` decimal(8,2) DEFAULT NULL,
+  `NK4` decimal(8,2) DEFAULT NULL,
+  `NK5` decimal(8,2) DEFAULT NULL,
+  `NK6` decimal(8,2) DEFAULT NULL,
   PRIMARY KEY (`iddiemthi`),
   UNIQUE KEY `cccd_UNIQUE` (`cccd`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
