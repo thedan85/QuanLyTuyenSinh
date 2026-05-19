@@ -128,6 +128,7 @@ public class NganhToHopPanel extends JPanel {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                UiTableTheme.applyColumnAlignment(table, c, column);
                 UiTableTheme.applyDataRowAppearance(table, c, row, isSelected);
                 return c;
             }

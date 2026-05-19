@@ -73,8 +73,51 @@ public final class UiTableTheme {
         }
 
         installDefaultStripedRenderers(table);
-        centerIdColumns(table);
         attachRowHover(table);
+    }
+
+    /**
+     * Căn trái: họ, tên, nơi sinh, tên tổ hợp, tên ngành, ghi chú, kết quả (và cột trạng thái).
+     * Các cột khác: căn giữa.
+     */
+    public static boolean isLeftAlignedColumn(String columnName) {
+        if (columnName == null) {
+            return false;
+        }
+        String n = columnName.trim().toLowerCase();
+        if (n.equals("họ") || n.equals("ho") || n.equals("tên") || n.equals("ten")) {
+            return true;
+        }
+        if (n.equals("họ tên") || n.equals("ho ten")) {
+            return true;
+        }
+        if (n.contains("nơi sinh")) {
+            return true;
+        }
+        if (n.contains("tên ngành")) {
+            return true;
+        }
+        if (n.contains("tên tổ hợp") || n.contains("ten to hop")) {
+            return true;
+        }
+        if (n.contains("tổ hợp thm cao nhất")) {
+            return true;
+        }
+        if (n.contains("ghi chú") || n.contains("ghichu")) {
+            return true;
+        }
+        if (n.contains("kết quả") || n.contains("ket qua") || n.contains("trạng thái")) {
+            return true;
+        }
+        return false;
+    }
+
+    public static void applyColumnAlignment(JTable table, Component c, int columnIndex) {
+        if (!(c instanceof JLabel jl) || table == null || columnIndex < 0 || columnIndex >= table.getColumnCount()) {
+            return;
+        }
+        String name = table.getColumnName(columnIndex);
+        jl.setHorizontalAlignment(isLeftAlignedColumn(name) ? SwingConstants.LEFT : SwingConstants.CENTER);
     }
 
     /**
@@ -152,6 +195,10 @@ public final class UiTableTheme {
             if (c instanceof JComponent jc) {
                 jc.setBorder(new EmptyBorder(HEADER_PAD_TOP, HEADER_PAD_LEFT, HEADER_PAD_BOTTOM, HEADER_PAD_RIGHT));
             }
+            if (c instanceof JLabel jl && table != null && column >= 0 && column < table.getColumnCount()) {
+                String colName = table.getColumnName(column);
+                jl.setHorizontalAlignment(isLeftAlignedColumn(colName) ? SwingConstants.LEFT : SwingConstants.CENTER);
+            }
             return c;
         }
     }
@@ -202,37 +249,12 @@ public final class UiTableTheme {
         });
     }
 
-    /** Căn giữa mọi cột có tiêu đề "ID" (không phân biệt hoa thường). */
-    public static void centerIdColumns(JTable table) {
-        if (table == null) {
-            return;
-        }
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            String name = table.getColumnName(i);
-            if (name == null || !name.trim().equalsIgnoreCase("ID")) {
-                continue;
-            }
-            final int col = i;
-            table.getColumnModel().getColumn(col).setCellRenderer(new DefaultTableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable t, Object value, boolean isSelected,
-                        boolean hasFocus, int row, int column) {
-                    Component c = super.getTableCellRendererComponent(t, value, isSelected, hasFocus, row, column);
-                    if (c instanceof JLabel jl) {
-                        jl.setHorizontalAlignment(SwingConstants.CENTER);
-                    }
-                    applyDataRowAppearance(t, c, row, isSelected);
-                    return c;
-                }
-            });
-        }
-    }
-
     private static final class StripedHoverRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                 boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            applyColumnAlignment(table, c, column);
             applyDataRowAppearance(table, c, row, isSelected);
             return c;
         }

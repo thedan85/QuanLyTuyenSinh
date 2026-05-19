@@ -18,6 +18,15 @@ public class BangQuyDoiDAO {
         }
     }
 
+    /** Lấy các bậc quy đổi theo phương thức (DGNL / VSAT) — dùng chung session với XetTuyenService. */
+    public List<BangQuyDoi> findByPhuongThuc(org.hibernate.Session session, String phuongThuc) {
+        return session.createQuery(
+                "FROM BangQuyDoi b WHERE UPPER(TRIM(b.dPhuongthuc)) = :pt",
+                BangQuyDoi.class)
+                .setParameter("pt", phuongThuc.trim().toUpperCase())
+                .list();
+    }
+
     public boolean isMaQuyDoiExists(String maQuyDoi) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             String hql = "SELECT count(b) FROM BangQuyDoi b WHERE b.dMaquydoi = :maQuyDoi";

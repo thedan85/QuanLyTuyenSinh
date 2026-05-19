@@ -122,9 +122,11 @@ public class NguyenVongPanel extends JPanel {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                UiTableTheme.applyColumnAlignment(table, c, column);
                 UiTableTheme.applyDataRowAppearance(table, c, row, isSelected);
                 if (!isSelected) {
-                    if (column == 8 && value != null) {
+                    String colName = table.getColumnName(column);
+                    if (colName != null && colName.toLowerCase().contains("kết quả") && value != null) {
                         if (value.toString().contains("TRÚNG TUYỂN")) {
                             c.setForeground(new Color(0, 150, 0)); c.setFont(c.getFont().deriveFont(Font.BOLD));
                         } else if (value.toString().contains("Rớt")) {
