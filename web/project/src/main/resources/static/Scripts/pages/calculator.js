@@ -218,6 +218,17 @@ async function updateDgnl() {
   const regionValue = qs("#dgnlRegion")?.value || "";
   const bonusPoints = readNumber(qs("#dgnlBonus")?.value) || 0;
 
+  if (rawScore !== null && (rawScore < 0 || rawScore > 1200)) {
+    setText(qs('[data-field="dgnlConverted"]'), "-");
+    setText(qs('[data-field="dgnlToHop"]'), "-");
+    setText(qs('[data-field="dgnlPriority"]'), "-");
+    setText(qs('[data-field="dgnlFinal"]'), "-");
+    setText(qs('[data-field="dgnlVsDiemSan"]'), "-");
+    setText(qs('[data-field="dgnlVsDiemTrungTuyen"]'), "-");
+    setText(qs('[data-field="dgnlNote"]'), "Điểm DGNL phải nằm trong khoảng 0 - 1200.");
+    return;
+  }
+
   const major = state.majorMap.get(majorCode);
   if (!major || rawScore === null) {
     setText(qs('[data-field="dgnlConverted"]'), "-");

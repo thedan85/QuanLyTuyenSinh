@@ -34,6 +34,9 @@ export function convertDgnlScore(rawScore, toHop, ranges = []) {
   if (rawScore === null || rawScore === undefined || Number.isNaN(rawScore)) {
     return null;
   }
+  if (rawScore < 0 || rawScore > SCORE_LIMITS.DGNL_MAX) {
+    return null;
+  }
 
   const match = ranges.find(
     (row) =>
@@ -129,6 +132,9 @@ export function calculateDgnlResult({
   bangQuyDoi,
 }) {
   if (!major || rawScore === null || rawScore === undefined || Number.isNaN(rawScore)) {
+    return null;
+  }
+  if (rawScore < 0 || rawScore > SCORE_LIMITS.DGNL_MAX) {
     return null;
   }
 
