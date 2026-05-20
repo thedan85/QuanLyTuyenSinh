@@ -109,7 +109,8 @@ export function convertVsatScore(rawScore, subject, toHop, ranges = []) {
   });
 
   if (!best) {
-    return null;
+    const fallback = (rawScore / SCORE_LIMITS.VSAT_MAX) * SCORE_LIMITS.THPT_MAX;
+    return round(fallback, 2);
   }
 
   const span = best.diemB - best.diemA;

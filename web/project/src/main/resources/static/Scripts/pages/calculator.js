@@ -108,8 +108,14 @@ function bindDgnlEvents() {
   if (!form) {
     return;
   }
-  form.addEventListener("input", () => void updateDgnl());
-  form.addEventListener("change", () => void updateDgnl());
+  form.addEventListener("input", () => {
+    applyDgnlInputLimits();
+    void updateDgnl();
+  });
+  form.addEventListener("change", () => {
+    applyDgnlInputLimits();
+    void updateDgnl();
+  });
 }
 
 function bindThptEvents() {
@@ -119,6 +125,81 @@ function bindThptEvents() {
   }
   form.addEventListener("input", () => void updateThpt());
   form.addEventListener("change", () => void updateThpt());
+}
+
+function applyDgnlInputLimits() {
+  const scoreInput = qs("#dgnlScore");
+  if (scoreInput) {
+    const sanitized = sanitizeIntegerInput(scoreInput.value, 0, 1200);
+    if (sanitized !== scoreInput.value) {
+      scoreInput.value = sanitized;
+    }
+  }
+
+  const bonusInput = qs("#dgnlBonus");
+  if (bonusInput) {
+    const sanitized = sanitizeDecimalInput(bonusInput.value, 0, 10);
+    if (sanitized !== bonusInput.value) {
+      bonusInput.value = sanitized;
+    }
+  }
+}
+
+function sanitizeIntegerInput(value, min, max) {
+  if (value === "") {
+    return "";
+  }
+  const digitsOnly = value.replace(/[^0-9]/g, "");
+  if (digitsOnly === "") {
+    return "";
+  }
+  let numeric = Number.parseInt(digitsOnly, 10);
+  if (Number.isNaN(numeric)) {
+    return "";
+  }
+  numeric = Math.min(max, Math.max(min, numeric));
+  return String(numeric);
+}
+
+function sanitizeDecimalInput(value, min, max) {
+  if (value === "") {
+    return "";
+  }
+  let cleaned = value.replace(/[^0-9.]/g, "");
+  const firstDot = cleaned.indexOf(".");
+  if (firstDot !== -1) {
+    cleaned =
+      cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, "");
+  }
+  if (cleaned === ".") {
+    cleaned = "0.";
+  }
+  const numeric = Number(cleaned);
+  if (Number.isNaN(numeric)) {
+    return "";
+  }
+  const clamped = Math.min(max, Math.max(min, numeric));
+  return cleaned.endsWith(".") ? `${clamped}.` : String(clamped);
+}
+
+function applyThptScoreLimits(mode) {
+  const maxScore = mode === "VSAT" ? 150 : 10;
+  const inputs = document.querySelectorAll("#thptForm [data-subject]");
+  inputs.forEach((input) => {
+    input.min = "0";
+    input.max = String(maxScore);
+    if (input.value === "") {
+      return;
+    }
+    const value = Number(input.value);
+    if (!Number.isNaN(value)) {
+      if (value > maxScore) {
+        input.value = String(maxScore);
+      } else if (value < 0) {
+        input.value = "0";
+      }
+    }
+  });
 }
 
 function readNumber(value) {
@@ -202,6 +283,8 @@ async function updateThpt() {
   const bonusPoints = readNumber(qs("#thptBonus")?.value) || 0;
 
   const mode = qs('input[name="thptMode"]:checked')?.value || "THPT";
+
+  applyThptScoreLimits(mode);
 
   const modeNote = qs("#thptNote");
   if (modeNote) {

@@ -63,7 +63,7 @@
                     <form id="dgnlForm" class="vstack gap-3">
                       <div class="form-field">
                         <label class="form-label" for="dgnlScore">Điểm DGNL (0 - 1200)</label>
-                        <input class="form-control" type="number" id="dgnlScore" min="0" max="1200" step="1" placeholder="Nhập điểm">
+                        <input class="form-control" type="number" id="dgnlScore" min="0" max="1200" step="1" inputmode="numeric" pattern="[0-9]*" placeholder="Nhập điểm">
                       </div>
                       <div class="form-field">
                         <label class="form-label" for="dgnlMajor">Chọn ngành</label>
@@ -81,7 +81,7 @@
                       </div>
                       <div class="form-field">
                         <label class="form-label" for="dgnlBonus">Điểm cộng (nếu có)</label>
-                        <input class="form-control" type="number" id="dgnlBonus" min="0" max="10" step="0.25" placeholder="0.00">
+                        <input class="form-control" type="number" id="dgnlBonus" min="0" max="10" step="0.25" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" placeholder="0.00">
                         <div class="form-text">VD: chứng chỉ ngoại ngữ, giải thưởng, ...</div>
                       </div>
                       <button class="btn btn-outline-primary" type="button" id="dgnlInfoBtn" data-bs-toggle="modal" data-bs-target="#priorityModal">Cách tính ưu tiên</button>
@@ -164,39 +164,39 @@
                       <div class="score-grid">
                         <div class="form-field">
                           <label class="form-label" for="scoreTo">Toán</label>
-                          <input class="form-control" type="number" id="scoreTo" min="0" max="150" step="0.25" data-subject="TO">
+                          <input class="form-control" type="number" id="scoreTo" min="0" max="10" step="0.25" data-subject="TO">
                         </div>
                         <div class="form-field">
                           <label class="form-label" for="scoreLi">Lý</label>
-                          <input class="form-control" type="number" id="scoreLi" min="0" max="150" step="0.25" data-subject="LI">
+                          <input class="form-control" type="number" id="scoreLi" min="0" max="10" step="0.25" data-subject="LI">
                         </div>
                         <div class="form-field">
                           <label class="form-label" for="scoreHo">Hóa</label>
-                          <input class="form-control" type="number" id="scoreHo" min="0" max="150" step="0.25" data-subject="HO">
+                          <input class="form-control" type="number" id="scoreHo" min="0" max="10" step="0.25" data-subject="HO">
                         </div>
                         <div class="form-field">
                           <label class="form-label" for="scoreSi">Sinh</label>
-                          <input class="form-control" type="number" id="scoreSi" min="0" max="150" step="0.25" data-subject="SI">
+                          <input class="form-control" type="number" id="scoreSi" min="0" max="10" step="0.25" data-subject="SI">
                         </div>
                         <div class="form-field">
                           <label class="form-label" for="scoreSu">Sử</label>
-                          <input class="form-control" type="number" id="scoreSu" min="0" max="150" step="0.25" data-subject="SU">
+                          <input class="form-control" type="number" id="scoreSu" min="0" max="10" step="0.25" data-subject="SU">
                         </div>
                         <div class="form-field">
                           <label class="form-label" for="scoreDi">Địa</label>
-                          <input class="form-control" type="number" id="scoreDi" min="0" max="150" step="0.25" data-subject="DI">
+                          <input class="form-control" type="number" id="scoreDi" min="0" max="10" step="0.25" data-subject="DI">
                         </div>
                         <div class="form-field">
                           <label class="form-label" for="scoreVa">Văn</label>
-                          <input class="form-control" type="number" id="scoreVa" min="0" max="150" step="0.25" data-subject="VA">
+                          <input class="form-control" type="number" id="scoreVa" min="0" max="10" step="0.25" data-subject="VA">
                         </div>
                         <div class="form-field">
                           <label class="form-label" for="scoreAnh">Anh thi</label>
-                          <input class="form-control" type="number" id="scoreAnh" min="0" max="150" step="0.25" data-subject="N1_THI">
+                          <input class="form-control" type="number" id="scoreAnh" min="0" max="10" step="0.25" data-subject="N1_THI">
                         </div>
                         <div class="form-field">
                           <label class="form-label" for="scoreAnhQD">Anh quy đổi</label>
-                          <input class="form-control" type="number" id="scoreAnhQD" min="0" max="150" step="0.25" data-subject="N1_QD">
+                          <input class="form-control" type="number" id="scoreAnhQD" min="0" max="10" step="0.25" data-subject="N1_QD">
                         </div>
                       </div>
                       <div class="form-text" id="thptNote">Nếu là VSAT, hệ thống sẽ quy đổi về thang 10.</div>
