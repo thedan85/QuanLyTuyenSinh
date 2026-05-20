@@ -124,7 +124,6 @@ public class XetTuyenService {
 
     /**
      * PT trên nguyện vọng: PT1/THPT, PT2/ĐGNL (NL1), PT3/VSAT (VSAT_* từng môn).
-     * Bảng xt_bangquydoi dùng d_phuongthuc = DGNL hoặc VSAT.
      */
     private double tinhDiemThxt(Session session, DiemThi dt,
             String maNganh, String maToHop, String phuongThuc) {
@@ -138,7 +137,6 @@ public class XetTuyenService {
             return tinhDiemVsat(session, dt, maNganh, maToHop);
         }
 
-        // PT1/THPT: luôn tính lại từ DiemThi + NganhToHop (không giữ diem_thxt cũ trên NV).
         return tinhDiemThpt(session, dt, maNganh, maToHop);
     }
 
@@ -167,7 +165,6 @@ public class XetTuyenService {
                 + (toHop.getDolech() != null ? toHop.getDolech() : 0.0);
     }
 
-    /** PT3: quy đổi từng môn VSAT (thang 150) → THPT (thang 10), cộng THM như PT1. */
     private double tinhDiemVsat(Session session, DiemThi dt, String maNganh, String maToHop) {
         if (dt == null || maToHop == null || maToHop.isEmpty()) {
             return 0.0;
@@ -203,14 +200,19 @@ public class XetTuyenService {
         String mon = maMon.trim().toUpperCase();
         double goc = getDiemVsatMon(dt, mon);
         double quyDoi = quyDoiTuBang(session, "VSAT", maToHop, mon, goc);
+        
         if (quyDoi > 0) {
             return quyDoi;
         }
-        // Không có bậc VSAT cho N1: dùng điểm THPT/chứng chỉ thang 10
+        
+        // Không có bậc VSAT cho N1: dùng điểm THPT kết hợp Chứng Chỉ (IELTS)
         if ("N1".equals(mon)) {
             double n1Thi = dt.getN1Thi() != null ? dt.getN1Thi() : 0.0;
-            double n1Cc = dt.getN1Cc() != null ? dt.getN1Cc() : 0.0;
-            return Math.max(n1Thi, n1Cc);
+            double n1CcGoc = dt.getN1Cc() != null ? dt.getN1Cc() : 0.0;
+            // Áp dụng hàm quy đổi chứng chỉ mới
+            double n1CcQuyDoi = (n1CcGoc > 0 && n1CcGoc <= 9.0) ? quyDoiIelts(n1CcGoc) : n1CcGoc;
+            
+            return Math.max(n1Thi, n1CcQuyDoi);
         }
         return 0.0;
     }
@@ -221,37 +223,19 @@ public class XetTuyenService {
         }
         Double v;
         switch (maMon.toUpperCase()) {
-            case "TO":
-                v = dt.getVsatTo();
-                break;
-            case "LI":
-                v = dt.getVsatLi();
-                break;
-            case "HO":
-                v = dt.getVsatHo();
-                break;
-            case "SI":
-                v = dt.getVsatSi();
-                break;
-            case "SU":
-                v = dt.getVsatSu();
-                break;
-            case "DI":
-                v = dt.getVsatDi();
-                break;
-            case "VA":
-                v = dt.getVsatVa();
-                break;
-            case "N1":
-                v = dt.getVsatN1();
-                break;
-            default:
-                return 0.0;
+            case "TO": v = dt.getVsatTo(); break;
+            case "LI": v = dt.getVsatLi(); break;
+            case "HO": v = dt.getVsatHo(); break;
+            case "SI": v = dt.getVsatSi(); break;
+            case "SU": v = dt.getVsatSu(); break;
+            case "DI": v = dt.getVsatDi(); break;
+            case "VA": v = dt.getVsatVa(); break;
+            case "N1": v = dt.getVsatN1(); break;
+            default: return 0.0;
         }
         return (v != null && v > 0) ? v : 0.0;
     }
 
-    /** PT2 hoặc DGNL → ĐGNL; PT3 hoặc VSAT → VSAT; còn lại THPT. */
     public static String resolveLoaiXetTuyen(String phuongThuc) {
         if (phuongThuc == null || phuongThuc.trim().isEmpty()) {
             return "THPT";
@@ -267,8 +251,7 @@ public class XetTuyenService {
     }
 
     /**
-     * Tra xt_bangquydoi: điểm gốc trong [A,B] → nội suy [C,D].
-     * DGNL: C,D thang ~30; VSAT: C,D thang 10. Nhiều bậc khớp: chọn khoảng hẹp nhất.
+     * Thuật toán tra bảng đã được tối ưu để chống lỗi vượt trần và kẽ hở biên.
      */
     private double quyDoiTuBang(Session session, String loaiPt, String maToHop, String maMon, double diemGoc) {
         if (diemGoc <= 0) {
@@ -281,29 +264,41 @@ public class XetTuyenService {
 
         BangQuyDoi best = null;
         double bestWidth = Double.MAX_VALUE;
+        
+        BangQuyDoi highestBand = null;
+        double currentMaxBb = -1.0;
 
         for (BangQuyDoi b : bands) {
-            if (!khopToHop(b.getdTohop(), maToHop)) {
-                continue;
-            }
-            if (!khopMon(b.getdMon(), maMon, loaiPt)) {
-                continue;
-            }
+            if (!khopToHop(b.getdTohop(), maToHop)) continue;
+            if (!khopMon(b.getdMon(), maMon, loaiPt)) continue;
+            
             Double a = b.getdDiema();
             Double bb = b.getdDiemb();
-            Double c = b.getdDiemc();
-            Double d = b.getdDiemd();
-            if (a == null || bb == null || c == null || d == null) {
+            if (a == null || bb == null || b.getdDiemc() == null || b.getdDiemd() == null) {
                 continue;
             }
-            if (diemGoc < a || diemGoc > bb) {
-                continue;
+
+            // Ghi nhận band cao nhất đề phòng diemGoc lớn hơn mọi band trong DB
+            if (bb > currentMaxBb) {
+                currentMaxBb = bb;
+                highestBand = b;
             }
-            double width = bb - a;
-            if (width < bestWidth) {
-                bestWidth = width;
-                best = b;
+
+            // Dùng >= và <= để đảm bảo các điểm nằm ngay trên biên đều được tính
+            if (diemGoc >= a && diemGoc <= bb) {
+                double width = bb - a;
+                if (width < bestWidth) {
+                    bestWidth = width;
+                    best = b;
+                }
             }
+        }
+
+        // Fix lỗi 150 điểm: Nếu không tìm thấy match chính xác do diemGoc quá cao, 
+        // tự động gán vào band cao nhất và quy về max biên của band đó
+        if (best == null && highestBand != null && diemGoc > currentMaxBb) {
+            best = highestBand;
+            diemGoc = currentMaxBb; 
         }
 
         if (best == null) {
@@ -337,12 +332,8 @@ public class XetTuyenService {
             return c;
         }
         double t = (x - a) / (b - a);
-        if (t < 0) {
-            t = 0;
-        }
-        if (t > 1) {
-            t = 1;
-        }
+        if (t < 0) t = 0;
+        if (t > 1) t = 1;
         return c + t * (d - c);
     }
 
@@ -350,41 +341,45 @@ public class XetTuyenService {
         return Math.round(v * 100000.0) / 100000.0;
     }
 
+    /**
+     * Hàm quy đổi điểm IELTS sang điểm THPT thang 10.
+     * Bạn có thể điều chỉnh lại barem này nếu trường của bạn yêu cầu khác.
+     */
+    private double quyDoiIelts(double ielts) {
+        if (ielts >= 7.0) return 10.0;
+        if (ielts >= 6.5) return 9.5;
+        if (ielts >= 6.0) return 9.0;
+        if (ielts >= 5.5) return 8.5;
+        if (ielts >= 5.0) return 8.0;
+        if (ielts >= 4.5) return 7.5;
+        if (ielts >= 4.0) return 7.0;
+        return 0.0; // Dưới 4.0 coi như không đủ điều kiện quy đổi
+    }
+
     private double getDiemMon(DiemThi dt, String maMon) {
-        if (maMon == null)
-            return 0.0;
+        if (maMon == null) return 0.0;
         switch (maMon.toUpperCase()) {
-            case "TO":
-                return dt.getDiemToan() != null ? dt.getDiemToan() : 0.0;
-            case "LI":
-                return dt.getDiemLy() != null ? dt.getDiemLy() : 0.0;
-            case "HO":
-                return dt.getDiemHoa() != null ? dt.getDiemHoa() : 0.0;
-            case "SI":
-                return dt.getDiemSinh() != null ? dt.getDiemSinh() : 0.0;
-            case "SU":
-                return dt.getDiemSu() != null ? dt.getDiemSu() : 0.0;
-            case "DI":
-                return dt.getDiemDia() != null ? dt.getDiemDia() : 0.0;
-            case "VA":
-                return dt.getDiemVan() != null ? dt.getDiemVan() : 0.0;
+            case "TO": return dt.getDiemToan() != null ? dt.getDiemToan() : 0.0;
+            case "LI": return dt.getDiemLy() != null ? dt.getDiemLy() : 0.0;
+            case "HO": return dt.getDiemHoa() != null ? dt.getDiemHoa() : 0.0;
+            case "SI": return dt.getDiemSinh() != null ? dt.getDiemSinh() : 0.0;
+            case "SU": return dt.getDiemSu() != null ? dt.getDiemSu() : 0.0;
+            case "DI": return dt.getDiemDia() != null ? dt.getDiemDia() : 0.0;
+            case "VA": return dt.getDiemVan() != null ? dt.getDiemVan() : 0.0;
             case "N1":
                 double n1Thi = dt.getN1Thi() != null ? dt.getN1Thi() : 0.0;
-                double n1Cc = dt.getN1Cc() != null ? dt.getN1Cc() : 0.0;
-                return Math.max(n1Thi, n1Cc);
-            case "TI":
-                return dt.getDiemTin() != null ? dt.getDiemTin() : 0.0;
-            case "KTPL":
-                return dt.getKtpl() != null ? dt.getKtpl() : 0.0;
-            default:
-                return 0.0;
+                double n1CcGoc = dt.getN1Cc() != null ? dt.getN1Cc() : 0.0;
+                
+                // Điểm chứng chỉ nếu nhập vào là IELTS (vd: 5.5, 6.0, 7.5) sẽ được quy đổi sang thang 10
+                double n1CcQuyDoi = (n1CcGoc > 0 && n1CcGoc <= 9.0) ? quyDoiIelts(n1CcGoc) : n1CcGoc;
+                
+                return Math.max(n1Thi, n1CcQuyDoi);
+            case "TI": return dt.getDiemTin() != null ? dt.getDiemTin() : 0.0;
+            case "KTPL": return dt.getKtpl() != null ? dt.getKtpl() : 0.0;
+            default: return 0.0;
         }
     }
 
-    /**
-     * Xét trúng tuyển theo vòng NV (mô hình A): vòng 1 = mọi NV1, vòng 2 = NV2 (thí sinh chưa trúng), ...
-     * Trong mỗi ngành + vòng: điểm cao trước; tôn chỉ tiêu tổng + chỉ tiêu PT (sl_*).
-     */
     private void xetTrungTuyen(Session session) {
         session.createQuery("UPDATE NguyenVong SET ketQua = 'Rớt'").executeUpdate();
 
@@ -498,7 +493,6 @@ public class XetTuyenService {
         return map;
     }
 
-    /** n_thpt / n_dgnl / n_vsat = '0' → ngành không nhận PT đó. */
     private static boolean nganhCoNhanPt(Nganh nganh, String loaiPt) {
         String flag;
         if ("DGNL".equals(loaiPt)) {
@@ -514,7 +508,6 @@ public class XetTuyenService {
         return "1".equals(flag.trim());
     }
 
-    /** sl_* = 0 hoặc null → không giới hạn riêng theo PT (chỉ giới hạn n_chitieu). */
     private static int chiTieuPt(Nganh nganh, String loaiPt) {
         if ("DGNL".equals(loaiPt)) {
             return nganh.getSlDgnl() != null ? nganh.getSlDgnl() : 0;
@@ -536,7 +529,6 @@ public class XetTuyenService {
         }
     }
 
-    /** Bộ đếm chỉ tiêu trúng tuyển theo ngành. */
     private static final class ChiTieuBoDem {
         int tong;
         int pt1;
