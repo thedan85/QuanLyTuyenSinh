@@ -47,6 +47,10 @@ public class DiemThi {
     
     @Column(name = "NK1") private Double nk1; // Năng khiếu 1
     @Column(name = "NK2") private Double nk2; // Năng khiếu 2
+    @Column(name = "NK3") private Double nk3; // Năng khiếu 3
+    @Column(name = "NK4") private Double nk4; // Năng khiếu 4
+    @Column(name = "NK5") private Double nk5; // Năng khiếu 5
+    @Column(name = "NK6") private Double nk6; // Năng khiếu 6
 
     public int getIddiemthi() { return iddiemthi; }
     public void setIddiemthi(int iddiemthi) { this.iddiemthi = iddiemthi; }
@@ -110,4 +114,12 @@ public class DiemThi {
     public void setNk1(Double nk1) { this.nk1 = nk1; }
     public Double getNk2() { return nk2; }
     public void setNk2(Double nk2) { this.nk2 = nk2; }
+    public Double getNk3() { return nk3; }
+    public void setNk3(Double nk3) { this.nk3 = nk3; }
+    public Double getNk4() { return nk4; }
+    public void setNk4(Double nk4) { this.nk4 = nk4; }
+    public Double getNk5() { return nk5; }
+    public void setNk5(Double nk5) { this.nk5 = nk5; }
+    public Double getNk6() { return nk6; }
+    public void setNk6(Double nk6) { this.nk6 = nk6; }
 }

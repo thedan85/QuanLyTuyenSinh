@@ -693,6 +693,10 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
                 d.setNl1(getSafeDouble(data, 16));
                 d.setNk1(getSafeDouble(data, 17));
                 d.setNk2(getSafeDouble(data, 18));
+                d.setNk3(getSafeDouble(data, 19));
+                d.setNk4(getSafeDouble(data, 20));
+                d.setNk5(getSafeDouble(data, 21));
+                d.setNk6(getSafeDouble(data, 22));
 
                 if (!thiSinhDAO.isCccdExists(d.getCccd())) {
                     invalid++;
