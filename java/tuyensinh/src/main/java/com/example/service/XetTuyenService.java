@@ -209,8 +209,9 @@ public class XetTuyenService {
         // Không có bậc VSAT cho N1: dùng điểm THPT/chứng chỉ thang 10
         if ("N1".equals(mon)) {
             double n1Thi = dt.getN1Thi() != null ? dt.getN1Thi() : 0.0;
-            double n1Cc = dt.getN1Cc() != null ? dt.getN1Cc() : 0.0;
-            return Math.max(n1Thi, n1Cc);
+            double n1CcGoc = dt.getN1Cc() != null ? dt.getN1Cc() : 0.0;
+            double n1CcQuyDoi = (n1CcGoc > 0 && n1CcGoc <= 9.0) ? quyDoiIelts(n1CcGoc) : n1CcGoc;
+            return Math.max(n1Thi, n1CcQuyDoi);
         }
         return 0.0;
     }
@@ -281,29 +282,38 @@ public class XetTuyenService {
 
         BangQuyDoi best = null;
         double bestWidth = Double.MAX_VALUE;
+        BangQuyDoi highestBand = null;
+        double currentMaxBb = -1.0;
 
         for (BangQuyDoi b : bands) {
-            if (!khopToHop(b.getdTohop(), maToHop)) {
+            if (!khopToHop(b.getdTohop(), maToHop))
                 continue;
-            }
-            if (!khopMon(b.getdMon(), maMon, loaiPt)) {
+            if (!khopMon(b.getdMon(), maMon, loaiPt))
                 continue;
-            }
+
             Double a = b.getdDiema();
             Double bb = b.getdDiemb();
-            Double c = b.getdDiemc();
-            Double d = b.getdDiemd();
-            if (a == null || bb == null || c == null || d == null) {
+            if (a == null || bb == null || b.getdDiemc() == null || b.getdDiemd() == null) {
                 continue;
             }
-            if (diemGoc < a || diemGoc > bb) {
-                continue;
+
+            if (bb > currentMaxBb) {
+                currentMaxBb = bb;
+                highestBand = b;
             }
-            double width = bb - a;
-            if (width < bestWidth) {
-                bestWidth = width;
-                best = b;
+
+            if (diemGoc >= a && diemGoc <= bb) {
+                double width = bb - a;
+                if (width < bestWidth) {
+                    bestWidth = width;
+                    best = b;
+                }
             }
+        }
+
+        if (best == null && highestBand != null && diemGoc > currentMaxBb) {
+            best = highestBand;
+            diemGoc = currentMaxBb;
         }
 
         if (best == null) {
@@ -350,6 +360,24 @@ public class XetTuyenService {
         return Math.round(v * 100000.0) / 100000.0;
     }
 
+    private double quyDoiIelts(double ielts) {
+        if (ielts >= 7.0)
+            return 10.0;
+        if (ielts >= 6.5)
+            return 9.5;
+        if (ielts >= 6.0)
+            return 9.0;
+        if (ielts >= 5.5)
+            return 8.5;
+        if (ielts >= 5.0)
+            return 8.0;
+        if (ielts >= 4.5)
+            return 7.5;
+        if (ielts >= 4.0)
+            return 7.0;
+        return 0.0;
+    }
+
     private double getDiemMon(DiemThi dt, String maMon) {
         if (maMon == null)
             return 0.0;
@@ -370,8 +398,9 @@ public class XetTuyenService {
                 return dt.getDiemVan() != null ? dt.getDiemVan() : 0.0;
             case "N1":
                 double n1Thi = dt.getN1Thi() != null ? dt.getN1Thi() : 0.0;
-                double n1Cc = dt.getN1Cc() != null ? dt.getN1Cc() : 0.0;
-                return Math.max(n1Thi, n1Cc);
+                double n1CcGoc = dt.getN1Cc() != null ? dt.getN1Cc() : 0.0;
+                double n1CcQuyDoi = (n1CcGoc > 0 && n1CcGoc <= 9.0) ? quyDoiIelts(n1CcGoc) : n1CcGoc;
+                return Math.max(n1Thi, n1CcQuyDoi);
             case "TI":
                 return dt.getDiemTin() != null ? dt.getDiemTin() : 0.0;
             case "KTPL":
