@@ -5,6 +5,7 @@ let majorsMapCache = null;
 let toHopMapCache = null;
 const nganhToHopCache = new Map();
 const bangQuyDoiCache = new Map();
+const bangQuyDoiPhuongThucCache = new Map();
 
 function normalizeMajor(item) {
   return {
@@ -76,10 +77,24 @@ export async function getBangQuyDoiByToHop(toHop) {
   return data;
 }
 
+export async function getBangQuyDoiByPhuongThuc(phuongThuc, toHop) {
+  if (!phuongThuc || !toHop) {
+    return [];
+  }
+  const key = `${phuongThuc}::${toHop}`;
+  if (bangQuyDoiPhuongThucCache.has(key)) {
+    return bangQuyDoiPhuongThucCache.get(key);
+  }
+  const data = await api.getBangQuyDoiByPhuongThuc(phuongThuc, toHop);
+  bangQuyDoiPhuongThucCache.set(key, data);
+  return data;
+}
+
 export function clearReferenceCache() {
   majorsCache = null;
   majorsMapCache = null;
   toHopMapCache = null;
   nganhToHopCache.clear();
   bangQuyDoiCache.clear();
+  bangQuyDoiPhuongThucCache.clear();
 }

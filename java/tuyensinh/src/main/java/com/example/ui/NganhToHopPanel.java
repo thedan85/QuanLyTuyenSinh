@@ -18,7 +18,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.List;
 
-public class NganhToHopPanel extends JPanel {
+public class NganhToHopPanel extends JPanel implements RefreshablePanel {
     private JTable table;
     private JScrollPane tableScroll;
     private DefaultTableModel tableModel;
@@ -192,6 +192,20 @@ public class NganhToHopPanel extends JPanel {
             }
         }
         UiTableColumns.refresh(table);
+    }
+
+    @Override
+    public void refreshData() {
+        Object selNganh = cbMaNganh.getSelectedItem();
+        Object selToHop = cbMaToHop.getSelectedItem();
+        loadComboBoxData();
+        if (selNganh != null) {
+            cbMaNganh.setSelectedItem(selNganh);
+        }
+        if (selToHop != null) {
+            cbMaToHop.setSelectedItem(selToHop);
+        }
+        loadData();
     }
 
     private void clearForm() {

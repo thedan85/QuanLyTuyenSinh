@@ -26,7 +26,7 @@ import com.example.dao.ToHopDAO;
 import com.example.entity.Nganh;
 import com.example.entity.ToHopMon;
 
-public class NganhPanel extends JPanel {
+public class NganhPanel extends JPanel implements RefreshablePanel {
     private JTable table;
     private JScrollPane tableScroll;
     private DefaultTableModel tableModel;
@@ -208,6 +208,16 @@ public class NganhPanel extends JPanel {
             }
         }
         UiTableColumns.refresh(table);
+    }
+
+    @Override
+    public void refreshData() {
+        Object selected = cbTohopGoc.getSelectedItem();
+        loadToHopToCombo();
+        if (selected != null) {
+            cbTohopGoc.setSelectedItem(selected);
+        }
+        loadData();
     }
 
     private void clearForm() {

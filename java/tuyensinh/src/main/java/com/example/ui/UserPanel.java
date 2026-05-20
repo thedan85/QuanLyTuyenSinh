@@ -8,7 +8,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-public class UserPanel extends JPanel {
+public class UserPanel extends JPanel implements RefreshablePanel {
     private JTable table;
     private JScrollPane tableScroll;
     private DefaultTableModel tableModel;
@@ -149,5 +149,10 @@ public class UserPanel extends JPanel {
             }
         }
         UiTableColumns.refresh(table);
+    }
+
+    @Override
+    public void refreshData() {
+        loadDataToTable();
     }
 }

@@ -54,6 +54,71 @@ export function convertDgnlScore(rawScore, toHop, ranges = []) {
   return round(fallback, 2);
 }
 
+export function convertVsatScore(rawScore, subject, toHop, ranges = []) {
+  if (rawScore === null || rawScore === undefined || Number.isNaN(rawScore)) {
+    return null;
+  }
+
+  const subjectKey = subject ? subject.trim().toUpperCase() : "";
+  if (!subjectKey) {
+    return null;
+  }
+
+  const toHopKey = toHop ? toHop.trim().toUpperCase() : "";
+  let best = null;
+  let bestWidth = Number.POSITIVE_INFINITY;
+
+  ranges.forEach((row) => {
+    const phuongThuc = row.phuongThuc ? row.phuongThuc.trim().toUpperCase() : "";
+    if (phuongThuc && phuongThuc !== "VSAT") {
+      return;
+    }
+
+    const rowToHop = row.toHop ? row.toHop.trim().toUpperCase() : "";
+    if (rowToHop && rowToHop !== toHopKey) {
+      return;
+    }
+
+    const rowMon = row.mon ? row.mon.trim().toUpperCase() : "";
+    if (!rowMon || rowMon !== subjectKey) {
+      return;
+    }
+
+    const { diemA, diemB, diemC, diemD } = row;
+    if (
+      diemA === null ||
+      diemA === undefined ||
+      diemB === null ||
+      diemB === undefined ||
+      diemC === null ||
+      diemC === undefined ||
+      diemD === null ||
+      diemD === undefined
+    ) {
+      return;
+    }
+    if (rawScore < diemA || rawScore > diemB) {
+      return;
+    }
+
+    const width = diemB - diemA;
+    if (width < bestWidth) {
+      bestWidth = width;
+      best = row;
+    }
+  });
+
+  if (!best) {
+    return null;
+  }
+
+  const span = best.diemB - best.diemA;
+  const ratio = span > 0 ? (rawScore - best.diemA) / span : 0;
+  const clamped = Math.min(1, Math.max(0, ratio));
+  const converted = best.diemC + clamped * (best.diemD - best.diemC);
+  return round(converted, 2);
+}
+
 export function calculateDgnlResult({
   rawScore,
   major,
@@ -87,22 +152,33 @@ export function calculateDgnlResult({
 
 export function calculateThptResults({
   subjectScores,
+  rawSubjectScores,
   major,
   groupValue,
   regionValue,
   bonusPoints,
   combos,
+  mode,
+  bangQuyDoiByToHop,
 }) {
   if (!major || !Array.isArray(combos) || combos.length === 0) {
     return [];
   }
 
   const utGoc = getPriorityPoints(groupValue, regionValue);
+  const scoreSource = mode === "VSAT" ? rawSubjectScores || {} : subjectScores || {};
 
   return combos.map((combo) => {
-    const d1 = subjectScores[combo.thMon1];
-    const d2 = subjectScores[combo.thMon2];
-    const d3 = subjectScores[combo.thMon3];
+    const d1Raw = scoreSource[combo.thMon1];
+    const d2Raw = scoreSource[combo.thMon2];
+    const d3Raw = scoreSource[combo.thMon3];
+
+    const ranges =
+      mode === "VSAT" && bangQuyDoiByToHop ? bangQuyDoiByToHop.get(combo.maToHop) || [] : [];
+
+    const d1 = mode === "VSAT" ? convertVsatScore(d1Raw, combo.thMon1, combo.maToHop, ranges) : d1Raw;
+    const d2 = mode === "VSAT" ? convertVsatScore(d2Raw, combo.thMon2, combo.maToHop, ranges) : d2Raw;
+    const d3 = mode === "VSAT" ? convertVsatScore(d3Raw, combo.thMon3, combo.maToHop, ranges) : d3Raw;
 
     const hasAll = [d1, d2, d3].every((value) => value !== null && value !== undefined);
 

@@ -39,7 +39,7 @@ import com.example.entity.NguyenVong;
 import com.example.entity.ToHopMon;
 import com.example.service.XetTuyenService;
 
-public class NguyenVongPanel extends JPanel {
+public class NguyenVongPanel extends JPanel implements RefreshablePanel {
     private JTable table;
     private JScrollPane tableScroll;
     private DefaultTableModel tableModel;
@@ -207,6 +207,18 @@ public class NguyenVongPanel extends JPanel {
             }
         }
         UiTableColumns.refresh(table);
+    }
+
+    @Override
+    public void refreshData() {
+        Object selCccd = cbCccd.getSelectedItem();
+        Object selNganh = cbMaNganh.getSelectedItem();
+        Object selToHop = cbMaToHop.getSelectedItem();
+        loadComboBoxData();
+        if (selCccd != null) cbCccd.setSelectedItem(selCccd);
+        if (selNganh != null) cbMaNganh.setSelectedItem(selNganh);
+        if (selToHop != null) cbMaToHop.setSelectedItem(selToHop);
+        loadData();
     }
 
     private void loadComboBoxData() {

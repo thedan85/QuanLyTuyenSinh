@@ -3,7 +3,6 @@ import {
   REGIONS,
   SUBJECT_LABELS,
   SUBJECT_LIST,
-  SCORE_LIMITS,
 } from "../data/constants.js";
 import {
   getMajors,
@@ -11,8 +10,9 @@ import {
   getToHopMap,
   getNganhToHopByMaNganh,
   getBangQuyDoiByToHop,
+  getBangQuyDoiByPhuongThuc,
 } from "../data/reference.js";
-import { calculateDgnlResult, calculateThptResults } from "../logic/score.js";
+import { calculateDgnlResult, calculateThptResults, convertVsatScore } from "../logic/score.js";
 import { formatScore } from "../utils/format.js";
 import { qs, setText } from "../utils/dom.js";
 import { renderComponent } from "../ui/components.js";
@@ -202,18 +202,17 @@ async function updateThpt() {
   const bonusPoints = readNumber(qs("#thptBonus")?.value) || 0;
 
   const mode = qs('input[name="thptMode"]:checked')?.value || "THPT";
-  const scaleDivider = mode === "VSAT" ? SCORE_LIMITS.VSAT_MAX / SCORE_LIMITS.THPT_MAX : 1;
 
   const modeNote = qs("#thptNote");
   if (modeNote) {
     modeNote.textContent =
       mode === "VSAT"
-        ? "Chế độ VSAT: hệ thống quy đổi về thang 10."
+        ? "Chế độ VSAT: quy đổi theo bảng bách phân vị về thang 10."
         : "Chế độ THPT: nhập điểm theo thang 10.";
   }
 
-  const subjectScores = collectSubjectScores(scaleDivider);
-  updateConvertedSummary(mode, subjectScores);
+  const rawSubjectScores = collectRawSubjectScores();
+  updateConvertedSummary(mode, rawSubjectScores);
 
   if (!majorCode) {
     renderThptTable([]);
@@ -226,19 +225,44 @@ async function updateThpt() {
     return;
   }
 
+  let bangQuyDoiByToHop = null;
+  if (mode === "VSAT") {
+    const toHopCodes = Array.from(
+      new Set(combos.map((combo) => combo.maToHop).filter((value) => value))
+    );
+    const entries = await Promise.all(
+      toHopCodes.map(async (toHop) => [toHop, await getBangQuyDoiByPhuongThuc("VSAT", toHop)])
+    );
+    if (currentRequest !== thptRequestId) {
+      return;
+    }
+    bangQuyDoiByToHop = new Map(entries);
+
+    const previewToHop = toHopCodes[0];
+    if (previewToHop) {
+      updateConvertedSummary(mode, rawSubjectScores, {
+        toHop: previewToHop,
+        ranges: bangQuyDoiByToHop.get(previewToHop) || [],
+      });
+    }
+  }
+
   const results = calculateThptResults({
-    subjectScores,
+    subjectScores: rawSubjectScores,
+    rawSubjectScores,
     major,
     groupValue,
     regionValue,
     bonusPoints,
     combos,
+    mode,
+    bangQuyDoiByToHop,
   });
 
   renderThptTable(results);
 }
 
-function collectSubjectScores(scaleDivider) {
+function collectRawSubjectScores() {
   const scores = {};
   SUBJECT_LIST.forEach((code) => {
     scores[code] = null;
@@ -264,17 +288,17 @@ function collectSubjectScores(scaleDivider) {
       scores[code] = null;
       return;
     }
-    scores[code] = value / scaleDivider;
+    scores[code] = value;
   });
 
   if (hasN1) {
-    scores.N1 = n1Raw / scaleDivider;
+    scores.N1 = n1Raw;
   }
 
   return scores;
 }
 
-function updateConvertedSummary(mode, subjectScores) {
+function updateConvertedSummary(mode, subjectScores, preview = null) {
   const summary = qs("#thptConvertedSummary");
   if (!summary) {
     return;
@@ -285,17 +309,36 @@ function updateConvertedSummary(mode, subjectScores) {
     return;
   }
 
+  if (!subjectScores) {
+    summary.textContent = "Nhập điểm VSAT để hệ thống quy đổi theo bảng bách phân vị.";
+    return;
+  }
+
   const pieces = SUBJECT_LIST.filter((code) => subjectScores[code] !== null).map((code) => {
     const label = SUBJECT_LABELS[code] || code;
+    if (preview && preview.ranges && preview.ranges.length > 0) {
+      const converted = convertVsatScore(subjectScores[code], code, preview.toHop, preview.ranges);
+      return `${label}: ${formatScore(converted, 2)}`;
+    }
     return `${label}: ${formatScore(subjectScores[code], 2)}`;
   });
 
   if (pieces.length === 0) {
-    summary.textContent = "Nhập điểm VSAT để hệ thống quy đổi về thang 10.";
+    summary.textContent = "Nhập điểm VSAT để hệ thống quy đổi theo bảng bách phân vị.";
     return;
   }
 
-  summary.textContent = `Quy đổi thang 10: ${pieces.join(", ")}`;
+  if (!preview || !preview.toHop) {
+    summary.textContent = "Chọn ngành để xem quy đổi theo bảng bách phân vị.";
+    return;
+  }
+
+  if (!preview.ranges || preview.ranges.length === 0) {
+    summary.textContent = `Chưa có bảng quy đổi VSAT cho tổ hợp ${preview.toHop}.`;
+    return;
+  }
+
+  summary.textContent = `Quy đổi thang 10 (${preview.toHop}): ${pieces.join(", ")}`;
 }
 
 function renderThptTable(results) {

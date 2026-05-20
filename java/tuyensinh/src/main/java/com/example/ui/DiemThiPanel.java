@@ -40,7 +40,7 @@ import com.example.dao.ThiSinhDAO;
 import com.example.entity.DiemThi;
 import com.example.entity.ThiSinh;
 
-public class DiemThiPanel extends JPanel {
+public class DiemThiPanel extends JPanel implements RefreshablePanel {
 
     /** Độ rộng chuẩn cho ô nhập điểm và combo trên form. */
     private static final int INPUT_COLS = 8;
@@ -304,6 +304,16 @@ public class DiemThiPanel extends JPanel {
             }
         }
         UiTableColumns.refresh(table);
+    }
+
+    @Override
+    public void refreshData() {
+        String selected = getSelectedCccd();
+        loadCccdCombo();
+        if (!selected.isEmpty()) {
+            selectCccd(selected);
+        }
+        loadData();
     }
 
     private Double parseDouble(String str) {

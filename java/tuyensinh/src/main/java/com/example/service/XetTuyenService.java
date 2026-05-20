@@ -1,18 +1,24 @@
 package com.example.service;
 
-import com.example.dao.BangQuyDoiDAO;
-import com.example.entity.*;
-import com.example.utils.HibernateUtil;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-import org.hibernate.query.Query;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
+
+import com.example.dao.BangQuyDoiDAO;
+import com.example.entity.BangQuyDoi;
+import com.example.entity.DiemCong;
+import com.example.entity.DiemThi;
+import com.example.entity.Nganh;
+import com.example.entity.NganhToHop;
+import com.example.entity.NguyenVong;
+import com.example.utils.HibernateUtil;
 
 public class XetTuyenService {
 
@@ -93,6 +99,9 @@ public class XetTuyenService {
             diemCongCC = (dc.getDiemCC() != null) ? dc.getDiemCC() : diemCongCC;
             diemUtxtGoc = (dc.getDiemUtxt() != null) ? dc.getDiemUtxt() : diemUtxtGoc;
         }
+        if (diemCongCC > 3.0) {
+            diemCongCC = 3.0;
+        }
         nv.setDiemCong(diemCongCC);
 
         double tongChuaUT = diemThxt + diemCongCC;
@@ -107,6 +116,9 @@ public class XetTuyenService {
         nv.setDiemUtqd(round5(diemUtqd));
 
         double diemXetTuyen = tongChuaUT + diemUtqd;
+        if (diemXetTuyen > 30.0) {
+            diemXetTuyen = 30.0;
+        }
         nv.setDiemXetTuyen(round5(diemXetTuyen));
     }
 

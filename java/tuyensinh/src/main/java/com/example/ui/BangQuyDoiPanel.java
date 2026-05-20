@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.List;
 
-public class BangQuyDoiPanel extends JPanel {
+public class BangQuyDoiPanel extends JPanel implements RefreshablePanel {
     private JTable table;
     private JScrollPane tableScroll;
     private DefaultTableModel tableModel;
@@ -178,6 +178,16 @@ public class BangQuyDoiPanel extends JPanel {
             }
         }
         UiTableColumns.refresh(table);
+    }
+
+    @Override
+    public void refreshData() {
+        Object selected = cbToHop.getSelectedItem();
+        loadToHopToCombo();
+        if (selected != null) {
+            cbToHop.setSelectedItem(selected);
+        }
+        loadData(txtSearch.getText());
     }
 
     private void clearForm() {

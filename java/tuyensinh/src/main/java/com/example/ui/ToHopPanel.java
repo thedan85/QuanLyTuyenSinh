@@ -9,7 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-public class ToHopPanel extends JPanel {
+public class ToHopPanel extends JPanel implements RefreshablePanel {
     private JTable table;
     private DefaultTableModel tableModel;
     private ToHopDAO toHopDAO;
@@ -111,6 +111,11 @@ public class ToHopPanel extends JPanel {
             }
         }
         UiTableColumns.refresh(table);
+    }
+
+    @Override
+    public void refreshData() {
+        loadData();
     }
 
     private void clearForm() {

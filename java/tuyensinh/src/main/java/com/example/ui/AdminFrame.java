@@ -45,27 +45,34 @@ public class AdminFrame extends JFrame {
         List<String> labels = new ArrayList<>();
         List<String> icons = new ArrayList<>();
         List<String> cardIds = new ArrayList<>();
+        List<JPanel> panels = new ArrayList<>();
 
         boolean isAdmin = "admin".equals(loggedInUser.getRole());
         if (isAdmin) {
-            addNav(deck, labels, icons, cardIds, new UserPanel(), "users", "Quản lý Người dùng", "👥");
-            addNav(deck, labels, icons, cardIds, new NguyenVongPanel(), "nv", "Xét tuyển & Nguyện vọng", "📋");
+            addNav(deck, labels, icons, cardIds, panels, new UserPanel(), "users", "Quản lý Người dùng", "👥");
+            addNav(deck, labels, icons, cardIds, panels, new NguyenVongPanel(), "nv", "Xét tuyển & Nguyện vọng", "📋");
         }
 
-        addNav(deck, labels, icons, cardIds, new ToHopPanel(), "th", "Quản lý Tổ hợp môn", "🔢");
-        addNav(deck, labels, icons, cardIds, new NganhPanel(), "ng", "Quản lý Ngành", "🏫");
-        addNav(deck, labels, icons, cardIds, new NganhToHopPanel(), "nth", "Quản lý Ngành - Tổ hợp", "🔗");
-        addNav(deck, labels, icons, cardIds, new ThiSinhPanel(), "ts", "Quản lý Thí sinh", "👤");
-        addNav(deck, labels, icons, cardIds, new BangQuyDoiPanel(), "bqd", "Quản lý Bảng quy đổi", "📊");
-        addNav(deck, labels, icons, cardIds, new DiemThiPanel(), "dt", "Quản lý Điểm thi", "📝");
-        addNav(deck, labels, icons, cardIds, new DiemXetTuyenPanel(), "dxt", "Điểm xét tuyển", "📈");
-        addNav(deck, labels, icons, cardIds, new DiemCongPanel(), "dc", "Quản lý Điểm cộng", "⭐");
+        addNav(deck, labels, icons, cardIds, panels, new ToHopPanel(), "th", "Quản lý Tổ hợp môn", "🔢");
+        addNav(deck, labels, icons, cardIds, panels, new NganhPanel(), "ng", "Quản lý Ngành", "🏫");
+        addNav(deck, labels, icons, cardIds, panels, new NganhToHopPanel(), "nth", "Quản lý Ngành - Tổ hợp", "🔗");
+        addNav(deck, labels, icons, cardIds, panels, new ThiSinhPanel(), "ts", "Quản lý Thí sinh", "👤");
+        addNav(deck, labels, icons, cardIds, panels, new BangQuyDoiPanel(), "bqd", "Quản lý Bảng quy đổi", "📊");
+        addNav(deck, labels, icons, cardIds, panels, new DiemThiPanel(), "dt", "Quản lý Điểm thi", "📝");
+        addNav(deck, labels, icons, cardIds, panels, new DiemXetTuyenPanel(), "dxt", "Điểm xét tuyển", "📈");
+        addNav(deck, labels, icons, cardIds, panels, new DiemCongPanel(), "dc", "Quản lý Điểm cộng", "⭐");
 
         JButton btnLogout = SidebarUi.createOutlineLogoutButton();
         sideCanvas.add(
-                SidebarUi.buildCollapsibleNavBlock(sidebarCard, labels, icons,
-                        i -> cardLayout.show(deck, cardIds.get(i)), btnLogout),
-                BorderLayout.CENTER);
+            SidebarUi.buildCollapsibleNavBlock(sidebarCard, labels, icons,
+                i -> {
+                    cardLayout.show(deck, cardIds.get(i));
+                    JPanel panel = panels.get(i);
+                    if (panel instanceof RefreshablePanel) {
+                    ((RefreshablePanel) panel).refreshData();
+                    }
+                }, btnLogout),
+            BorderLayout.CENTER);
 
         sidebarCard.add(sideCanvas, BorderLayout.CENTER);
         sidebarCard.add(btnLogout, BorderLayout.SOUTH);
@@ -91,10 +98,11 @@ public class AdminFrame extends JFrame {
     }
 
     private static void addNav(JPanel deck, List<String> labels, List<String> icons, List<String> cardIds,
-                               JPanel panel, String id, String label, String iconEmoji) {
+                               List<JPanel> panels, JPanel panel, String id, String label, String iconEmoji) {
         deck.add(panel, id);
         labels.add(label);
         icons.add(iconEmoji);
         cardIds.add(id);
+        panels.add(panel);
     }
 }

@@ -32,7 +32,7 @@ import com.example.entity.DiemCong;
 import com.example.entity.Nganh;
 import com.example.entity.ToHopMon;
 
-public class DiemCongPanel extends JPanel {
+public class DiemCongPanel extends JPanel implements RefreshablePanel {
     private JTable table;
     private JScrollPane tableScroll;
     private DefaultTableModel tableModel;
@@ -245,6 +245,18 @@ public class DiemCongPanel extends JPanel {
             }
         }
         UiTableColumns.refresh(table);
+    }
+
+    @Override
+    public void refreshData() {
+        Object selCccd = cbCccd.getSelectedItem();
+        Object selNganh = cbMaNganh.getSelectedItem();
+        Object selToHop = cbMaToHop.getSelectedItem();
+        loadComboBoxData();
+        if (selCccd != null) cbCccd.setSelectedItem(selCccd);
+        if (selNganh != null) cbMaNganh.setSelectedItem(selNganh);
+        if (selToHop != null) cbMaToHop.setSelectedItem(selToHop);
+        loadData(txtSearch.getText());
     }
 
     private void clearForm() {

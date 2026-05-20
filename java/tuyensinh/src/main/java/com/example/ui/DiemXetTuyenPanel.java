@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Panel xem điểm xét tuyển theo nguyện vọng (style đồng bộ ThiSinhPanel).
  */
-public class DiemXetTuyenPanel extends JPanel {
+public class DiemXetTuyenPanel extends JPanel implements RefreshablePanel {
     private final NguyenVongDAO dao = new NguyenVongDAO();
 
     private JTable table;
@@ -215,6 +215,11 @@ public class DiemXetTuyenPanel extends JPanel {
                 });
         }
         UiTableColumns.refresh(table);
+    }
+
+    @Override
+    public void refreshData() {
+        loadData();
     }
 
     private static String fmt(Double v) {
