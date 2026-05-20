@@ -66,13 +66,28 @@ export async function initCalculatorPage() {
     return;
   }
 
-  populateSelect(dgnlMajor, state.majors, (item) => `${item.maNganh} - ${item.tenNganh}`);
-  populateSelect(thptMajor, state.majors, (item) => `${item.maNganh} - ${item.tenNganh}`);
-  populateSelect(dgnlGroup, PRIORITY_GROUPS, (item) => item.label);
-  populateSelect(thptGroup, PRIORITY_GROUPS, (item) => item.label);
-  populateSelect(dgnlRegion, REGIONS, (item) => item.label);
-  populateSelect(thptRegion, REGIONS, (item) => item.label);
-  populateSelect(thptBonusSubject, buildBonusSubjects(), (item) => item.label);
+    populateSelect(dgnlMajor, state.majors, (item) => `${item.maNganh} - ${item.tenNganh}`);
+    populateSelect(thptMajor, state.majors, (item) => `${item.maNganh} - ${item.tenNganh}`);
+    populateSelect(dgnlGroup, PRIORITY_GROUPS, (item) => item.label, {
+      includePlaceholder: false,
+      defaultValue: "",
+    });
+    populateSelect(thptGroup, PRIORITY_GROUPS, (item) => item.label, {
+      includePlaceholder: false,
+      defaultValue: "",
+    });
+    populateSelect(dgnlRegion, REGIONS, (item) => item.label, {
+      includePlaceholder: false,
+      defaultValue: "",
+    });
+    populateSelect(thptRegion, REGIONS, (item) => item.label, {
+      includePlaceholder: false,
+      defaultValue: "",
+    });
+    populateSelect(thptBonusSubject, buildBonusSubjects(), (item) => item.label, {
+      includePlaceholder: false,
+      defaultValue: "",
+    });
 
   bindDgnlEvents();
   bindThptEvents();
@@ -80,17 +95,28 @@ export async function initCalculatorPage() {
   updateThpt();
 }
 
-function populateSelect(select, items, labelBuilder) {
+function populateSelect(select, items, labelBuilder, options = {}) {
   if (!select) {
     return;
   }
-  const options = ["<option value=\"\">Chọn</option>"];
+  const includePlaceholder = options.includePlaceholder !== false;
+  const defaultValue = options.defaultValue ?? null;
+  const optionHtml = [];
+  if (includePlaceholder) {
+    optionHtml.push("<option value=\"\">Chọn</option>");
+  }
   items.forEach((item) => {
     const label = labelBuilder(item);
     const value = item.value ?? item.maNganh ?? item.code ?? "";
-    options.push(`<option value=\"${value}\">${label}</option>`);
+    const selected = defaultValue !== null && String(value) === String(defaultValue);
+    optionHtml.push(
+      `<option value=\"${value}\"${selected ? " selected" : ""}>${label}</option>`
+    );
   });
-  select.innerHTML = options.join("");
+  select.innerHTML = optionHtml.join("");
+  if (defaultValue !== null) {
+    select.value = String(defaultValue);
+  }
 }
 
 function buildBonusSubjects() {
