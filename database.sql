@@ -1,4 +1,4 @@
-CREATE DATABASE  IF NOT EXISTS `xettuyen2026` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE  IF NOT EXISTS `xettuyen2026` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `xettuyen2026`;
 -- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
 --
@@ -37,7 +37,7 @@ CREATE TABLE `xt_bangquydoi` (
   `d_phanvi` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`idqd`),
   UNIQUE KEY `d_maquydoi_UNIQUE` (`d_maquydoi`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -70,7 +70,7 @@ CREATE TABLE `xt_diemcongxetuyen` (
   `dc_keys` varchar(45) NOT NULL,
   PRIMARY KEY (`iddiemcong`),
   UNIQUE KEY `dc_keys_UNIQUE` (`dc_keys`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -125,7 +125,7 @@ CREATE TABLE `xt_diemthixettuyen` (
   `NK6` decimal(8,2) DEFAULT NULL,
   PRIMARY KEY (`iddiemthi`),
   UNIQUE KEY `cccd_UNIQUE` (`cccd`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -134,13 +134,19 @@ CREATE TABLE `xt_diemthixettuyen` (
 
 LOCK TABLES `xt_diemthixettuyen` WRITE;
 /*!40000 ALTER TABLE `xt_diemthixettuyen` DISABLE KEYS */;
-INSERT INTO `xt_diemthixettuyen` VALUES 
+INSERT INTO `xt_diemthixettuyen` (
+  `iddiemthi`, `cccd`, `sobaodanh`, `d_phuongthuc`,
+  `TO`, `LI`, `HO`, `SI`, `SU`, `DI`, `VA`,
+  `N1_THI`, `N1_CC`, `CNCN`, `CNNN`, `TI`, `KTPL`,
+  `VSAT_TO`, `VSAT_LI`, `VSAT_HO`, `VSAT_SI`, `VSAT_SU`, `VSAT_DI`, `VSAT_VA`, `VSAT_N1`,
+  `NL1`, `NK1`, `NK2`, `NK3`, `NK4`, `NK5`, `NK6`
+) VALUES
 (1,'001204000001','SGU001','PT1',8.50,7.00,6.50,0.00,0.00,0.00,7.50,8.00,9.00,8.00,0.00,7.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (2,'001204000002','SGU002','PT1',9.00,8.50,9.00,0.00,0.00,0.00,6.00,7.50,7.50,0.00,0.00,0.00,8.50,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (3,'001204000003','SGU003','PT1',7.00,0.00,0.00,0.00,8.00,8.50,8.00,6.00,6.00,0.00,0.00,0.00,7.50,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (4,'001204000004','SGU004','PT2',0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,850.00,NULL,NULL,NULL,NULL,NULL,NULL),
 (5,'001204000005','SGU005','PT1',8.00,8.00,8.00,8.00,8.00,8.00,8.00,8.00,8.00,8.00,0.00,8.00,8.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(6,'001204000006','SGU006','PT3',7.50,0.00,0.00,0.00,0.00,0.00,7.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,8.50,9.00,NULL,NULL,NULL,NULL),
+(6,'001204000006','SGU006','PT3',7.50,0.00,0.00,0.00,0.00,0.00,7.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (7,'001204000007','SGU007','PT1',6.50,6.00,5.50,5.00,7.00,7.50,6.50,5.00,5.00,8.00,0.00,0.00,7.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (8,'001204000008','SGU008','PT2',0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,920.00,NULL,NULL,NULL,NULL,NULL,NULL),
 (9,'001204000009','SGU009','PT1',9.50,9.00,9.50,0.00,0.00,0.00,8.00,9.00,10.00,9.00,0.00,9.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -252,7 +258,7 @@ CREATE TABLE `xt_nguyenvongxettuyen` (
   `tt_thm` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`idnv`),
   UNIQUE KEY `nv_keys_UNIQUE` (`nv_keys`)
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -283,24 +289,19 @@ CREATE TABLE `xt_thisinhxettuyen25` (
   `password` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `gioi_tinh` varchar(10) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
   `email` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `noi_sinh` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
+  `noi_sinh` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
   `updated_at` date DEFAULT NULL,
   `doi_tuong` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
   `khu_vuc` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
   PRIMARY KEY (`idthisinh`),
   UNIQUE KEY `cccd_UNIQUE` (`cccd`)
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Dumping data for table `xt_thisinhxettuyen25`
 --
 
-LOCK TABLES `xt_thisinhxettuyen25` WRITE;
-/*!40000 ALTER TABLE `xt_thisinhxettuyen25` DISABLE KEYS */;
-INSERT INTO `xt_thisinhxettuyen25` VALUES (1,'001204000001','SGU001','Nguyễn Văn','An','01/01/2006','0901234501','123456','Nam','an@gmail.com','HCM','2026-04-16','01','KV1'),(2,'001204000002','SGU002','Trần Thị','Bình','02/02/2006','0901234502','123456','Nữ','binh@gmail.com','Hà Nội','2026-04-16','01','KV2'),(3,'001204000003','SGU003','Lê Hoàng','Cường','03/03/2006','0901234503','123456','Nam','cuong@gmail.com','Đà Nẵng','2026-04-16','01','KV2-NT'),(4,'001204000004','SGU004','Phạm Minh','Dũng','04/04/2006','0901234504','123456','Nam','dung@gmail.com','Cần Thơ','2026-04-16','02','KV3'),(5,'001204000005','SGU005','Hoàng Mỹ','Duyên','05/05/2006','0901234505','123456','Nữ','duyen@gmail.com','HCM','2026-04-16','01','KV1'),(6,'001204000006','SGU006','Vũ Gia','Hân','06/06/2006','0901234506','123456','Nữ','han@gmail.com','Hải Phòng','2026-04-16','01','KV2'),(7,'001204000007','SGU007','Đặng Hữu','Hùng','07/07/2006','0901234507','123456','Nam','hung@gmail.com','Đồng Nai','2026-04-16','03','KV2'),(8,'001204000008','SGU008','Bùi Tuyết','Lan','08/08/2006','0901234508','123456','Nữ','lan@gmail.com','Bình Dương','2026-04-16','01','KV3'),(9,'001204000009','SGU009','Ngô Quang','Minh','09/09/2006','0901234509','123456','Nam','minh@gmail.com','HCM','2026-04-16','01','KV1'),(10,'001204000010','SGU010','Đỗ Thị','Nở','10/10/2006','0901234510','123456','Nữ','no@gmail.com','Long An','2026-04-16','01','KV2'),(11,'001204000011','SGU011','Trịnh Công','Sơn','11/11/2006','0901234511','123456','Nam','son@gmail.com','Quảng Nam','2026-04-16','04','KV2-NT'),(12,'001204000012','SGU012','Lý Thanh','Thảo','12/12/2006','0901234512','123456','Nữ','thao@gmail.com','Vũng Tàu','2026-04-16','01','KV3'),(13,'001204000013','SGU013','Mai Đức','Trung','13/01/2006','0901234513','123456','Nam','trung@gmail.com','Huế','2026-04-16','01','KV1'),(14,'001204000014','SGU014','Đào Kim','Phượng','14/02/2006','0901234514','123456','Nữ','phuong@gmail.com','Bình Phước','2026-04-16','01','KV2'),(15,'001204000015','SGU015','Hồ Vĩnh','Khoa','15/03/2006','0901234515','123456','Nam','khoa@gmail.com','Khánh Hòa','2026-04-16','01','KV2'),(16,'001204000016','SGU016','Lương Gia','Bảo','16/04/2006','0901234516','123456','Nam','bao@gmail.com','Tiền Giang','2026-04-16','02','KV3'),(17,'001204000017','SGU017','Vương Thu','Thủy','17/05/2006','0901234517','123456','Nữ','thuy@gmail.com','Lâm Đồng','2026-04-16','01','KV1'),(18,'001204000018','SGU018','Đoàn Nguyên','Đức','18/06/2006','0901234518','123456','Nam','duc@gmail.com','Gia Lai','2026-04-16','01','KV2'),(19,'001204000019','SGU019','Phan Mạnh','Quỳnh','19/07/2006','0901234519','123456','Nam','quynh@gmail.com','Nghệ An','2026-04-16','01','KV2-NT'),(20,'001204000020','SGU020','Tạ Minh','Tâm','20/08/2006','0901234520','123456','Nữ','tam@gmail.com','Bến Tre','2026-04-16','01','KV3'),(21,'001204000021','SGU021','Dương Quá','Nhi','21/09/2006','0901234521','123456','Nữ','nhi@gmail.com','Cà Mau','2026-04-16','01','KV1'),(22,'001204000022','SGU022','Quách Tĩnh','Long','22/10/2006','0901234522','123456','Nam','long@gmail.com','Bình Định','2026-04-16','01','KV2'),(23,'001204000023','SGU023','Âu Dương','Phong','23/11/2006','0901234523','123456','Nam','phong@gmail.com','Phú Yên','2026-04-16','01','KV2'),(24,'001204000024','SGU024','Chu Chỉ','Nhược','24/12/2006','0901234524','123456','Nữ','nhuoc@gmail.com','Quảng Ngãi','2026-04-16','03','KV3'),(25,'001204000025','SGU025','Trương Vô','Kỵ','25/01/2006','0901234525','123456','Nam','ky@gmail.com','HCM','2026-04-16','01','KV1'),(26,'001204000026','SGU026','Tiểu Long','Nữ','26/02/2006','0901234526','123456','Nữ','nu@gmail.com','Tây Ninh','2026-04-16','01','KV2'),(27,'001204000027','SGU027','Mộ Dung','Phục','27/03/2006','0901234527','123456','Nam','phuc@gmail.com','Bắc Ninh','2026-04-16','01','KV2-NT'),(28,'001204000028','SGU028','Công Tôn','Sách','28/04/2006','0901234528','123456','Nam','sach@gmail.com','Hải Dương','2026-04-16','01','KV3'),(29,'001204000029','SGU029','Triển','Chiêu','29/05/2006','0901234529','123456','Nam','chieu@gmail.com','Thanh Hóa','2026-04-16','02','KV1'),(30,'001204000030','SGU030','Bao','Chửng','30/06/2006','0901234530','123456','Nam','chung@gmail.com','Nghệ An','2026-04-16','01','KV2');
-/*!40000 ALTER TABLE `xt_thisinhxettuyen25` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `xt_tohop_monthi`
@@ -346,7 +347,7 @@ CREATE TABLE `xt_users` (
   `is_active` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
