@@ -1,6 +1,8 @@
 package com.example.dao;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -84,6 +86,16 @@ public class ThiSinhDAO {
         } catch (Exception e) { return true; }
     }
 
+    public Set<String> getAllCccdSet() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            List<String> list = session.createQuery("SELECT t.cccd FROM ThiSinh t", String.class).list();
+            return new HashSet<>(list);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new HashSet<>();
+        }
+    }
+
     public boolean addThiSinh(ThiSinh ts) {
         Transaction tx = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -93,6 +105,7 @@ public class ThiSinhDAO {
             return true;
         } catch (Exception e) {
             if (tx != null) tx.rollback();
+            e.printStackTrace();
             return false;
         }
     }

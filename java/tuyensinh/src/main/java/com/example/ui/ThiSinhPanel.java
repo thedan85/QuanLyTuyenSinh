@@ -10,8 +10,13 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ThiSinhPanel extends JPanel {
     private JTable table;
@@ -150,7 +155,7 @@ public class ThiSinhPanel extends JPanel {
             JFileChooser fc = new JFileChooser();
             fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV Files", "csv"));
             if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                importCSV(fc.getSelectedFile());
+                importCSVAsync(fc.getSelectedFile());
             }
         });
 
@@ -224,22 +229,105 @@ public class ThiSinhPanel extends JPanel {
 
     }
 
-    private String getSafeString(String[] data, int index) {
-        return (index < data.length && data[index] != null) ? data[index].trim() : "";
+    private String getSafeString(List<String> data, int index) {
+        return (index < data.size() && data.get(index) != null) ? data.get(index).trim() : "";
     }
 
-    private void importCSV(File file) {
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line; boolean first = true;
-            int success = 0, duplicate = 0;
-            long currentTime = System.currentTimeMillis();
+    private static class ImportResult {
+        private final int success;
+        private final int duplicate;
+        private final int invalid;
+
+        private ImportResult(int success, int duplicate, int invalid) {
+            this.success = success;
+            this.duplicate = duplicate;
+            this.invalid = invalid;
+        }
+    }
+
+    private List<String> parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    current.append('"');
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c == ',' && !inQuotes) {
+                fields.add(current.toString().trim());
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+
+        fields.add(current.toString().trim());
+        return fields;
+    }
+
+    private void importCSVAsync(File file) {
+        btnImport.setEnabled(false);
+        SwingWorker<ImportResult, Void> worker = new SwingWorker<>() {
+            @Override
+            protected ImportResult doInBackground() throws Exception {
+                return importCSV(file);
+            }
+
+            @Override
+            protected void done() {
+                btnImport.setEnabled(true);
+                try {
+                    ImportResult result = get();
+                    JOptionPane.showMessageDialog(ThiSinhPanel.this,
+                            "Import xong!\nThành công: " + result.success +
+                                    "\nBỏ qua (trùng CCCD): " + result.duplicate +
+                                    "\nLỗi/thiếu dữ liệu: " + result.invalid);
+                    loadData();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(ThiSinhPanel.this, "Lỗi đọc file CSV! Định dạng không hợp lệ.");
+                    ex.printStackTrace();
+                }
+            }
+        };
+
+        worker.execute();
+    }
+
+    private ImportResult importCSV(File file) throws Exception {
+        int success = 0;
+        int duplicate = 0;
+        int invalid = 0;
+        long currentTime = System.currentTimeMillis();
+        Set<String> existingCccds = dao.getAllCccdSet();
+        if (existingCccds == null) {
+            existingCccds = new HashSet<>();
+        }
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            String line;
+            boolean first = true;
 
             while ((line = br.readLine()) != null) {
                 if (first) { first = false; continue; }
-                String[] data = line.split(",", -1);
-                
+                if (line.trim().isEmpty()) { continue; }
+
+                List<String> data = parseCsvLine(line);
                 String cccd = getSafeString(data, 0);
-                if (cccd.isEmpty()) continue;
+                if (cccd.startsWith("\uFEFF")) {
+                    cccd = cccd.substring(1);
+                }
+                if (cccd.isEmpty()) { invalid++; continue; }
+
+                if (existingCccds.contains(cccd)) {
+                    duplicate++;
+                    continue;
+                }
 
                 ThiSinh ts = new ThiSinh();
                 ts.setCccd(cccd);
@@ -248,15 +336,15 @@ public class ThiSinhPanel extends JPanel {
                 ts.setTen(getSafeString(data, 3));
                 ts.setNgaySinh(getSafeString(data, 4));
                 ts.setDienThoai(getSafeString(data, 5));
-                
+
                 // MẬT KHẨU: Nếu file CSV không có cột mật khẩu hoặc để trống, set mặc định là 123456
                 String pass = getSafeString(data, 6);
                 ts.setPassword(pass.isEmpty() ? "123456" : pass);
-                
+
                 ts.setGioiTinh(getSafeString(data, 7));
                 ts.setEmail(getSafeString(data, 8));
                 ts.setNoiSinh(getSafeString(data, 9));
-                
+
                 String dateStr = getSafeString(data, 10);
                 try {
                     ts.setUpdatedAt(dateStr.isEmpty() ? new java.sql.Date(currentTime) : java.sql.Date.valueOf(dateStr));
@@ -267,17 +355,15 @@ public class ThiSinhPanel extends JPanel {
                 ts.setDoiTuong(getSafeString(data, 11));
                 ts.setKhuVuc(getSafeString(data, 12));
 
-                if (!dao.isCccdExists(ts.getCccd())) {
-                    if (dao.addThiSinh(ts)) success++;
+                if (dao.addThiSinh(ts)) {
+                    success++;
+                    existingCccds.add(cccd);
                 } else {
-                    duplicate++;
+                    invalid++;
                 }
             }
-            JOptionPane.showMessageDialog(this, "Import xong!\nThành công: " + success + "\nBỏ qua (trùng CCCD): " + duplicate);
-            loadData();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi đọc file CSV! Định dạng không hợp lệ.");
-            ex.printStackTrace();
         }
+
+        return new ImportResult(success, duplicate, invalid);
     }
 }
