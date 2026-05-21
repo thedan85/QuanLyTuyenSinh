@@ -18,6 +18,21 @@ public class NganhToHopDAO {
         }
     }
 
+    public List<NganhToHop> findByMaNganh(String maNganh) {
+        if (maNganh == null || maNganh.trim().isEmpty()) {
+            return List.of();
+        }
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<NganhToHop> q = session.createQuery(
+                    "FROM NganhToHop n WHERE n.manganh = :ma ORDER BY n.matohop", NganhToHop.class);
+            q.setParameter("ma", maNganh.trim());
+            return q.list();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
+    }
+
     // Kiểm tra xem Ngành này đã có Tổ hợp này chưa
     public boolean isMappingExists(String tbKeys) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

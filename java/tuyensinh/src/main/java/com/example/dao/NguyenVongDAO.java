@@ -170,6 +170,85 @@ public class NguyenVongDAO {
         }
     }
 
+    /** Trùng (CCCD + ngành) — khớp unique uk_nv_cccd_nganh_tt (mỗi ngành một lần / thí sinh). */
+    public boolean isCccdNganhExists(String cccd, String maNganh) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "SELECT count(n) FROM NguyenVong n WHERE n.tsCccd = :cccd AND n.maNganh = :ma";
+            Query<Long> query = session.createQuery(hql, Long.class);
+            query.setParameter("cccd", cccd);
+            query.setParameter("ma", maNganh);
+            return query.uniqueResult() > 0;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    public List<NguyenVong> findByCccd(String cccd) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<NguyenVong> q = session.createQuery(
+                    "FROM NguyenVong n WHERE n.tsCccd = :cccd ORDER BY n.thuTuNV", NguyenVong.class);
+            q.setParameter("cccd", cccd);
+            return q.list();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /** Thứ tự NV tiếp theo khi thêm (max + 1). */
+    public int suggestNextThuTu(String cccd) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<Integer> q = session.createQuery(
+                    "SELECT max(n.thuTuNV) FROM NguyenVong n WHERE n.tsCccd = :cccd", Integer.class);
+            q.setParameter("cccd", cccd);
+            Integer max = q.uniqueResult();
+            return (max == null) ? 1 : max + 1;
+        } catch (Exception e) {
+            return 1;
+        }
+    }
+
+    /** Hoán đổi thứ tự NV và cập nhật nv_keys tương ứng. */
+    public boolean swapThuTu(int idnvA, int idnvB) {
+        if (idnvA == idnvB) {
+            return false;
+        }
+        Transaction tx = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            tx = session.beginTransaction();
+            NguyenVong a = session.get(NguyenVong.class, idnvA);
+            NguyenVong b = session.get(NguyenVong.class, idnvB);
+            if (a == null || b == null || !a.getTsCccd().equals(b.getTsCccd())) {
+                return false;
+            }
+            Integer ttA = a.getThuTuNV();
+            Integer ttB = b.getThuTuNV();
+            a.setThuTuNV(ttB);
+            b.setThuTuNV(ttA);
+            a.setNvKeys(rebuildNvKeys(a));
+            b.setNvKeys(rebuildNvKeys(b));
+            session.update(a);
+            session.update(b);
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /** Khóa thô: CCCD_MaNganh_TT; sau tối ưu: CCCD_MaNganh_TổHợp_PT. */
+    public static String rebuildNvKeys(NguyenVong nv) {
+        if (nv.getPhuongThuc() != null && !nv.getPhuongThuc().trim().isEmpty()
+                && nv.getMaToHop() != null && !nv.getMaToHop().trim().isEmpty()) {
+            return nv.getTsCccd() + "_" + nv.getMaNganh() + "_" + nv.getMaToHop() + "_" + nv.getPhuongThuc();
+        }
+        return nv.getTsCccd() + "_" + nv.getMaNganh() + "_" + nv.getThuTuNV();
+    }
+
     /** Danh sách đầy đủ cho panel Điểm xét tuyển (lọc CCCD/họ tên, có THM cao nhất). */
     public List<DiemXetTuyenRow> buildDiemXetTuyenRows(String keyword) {
         String kw = keyword == null ? "" : keyword.trim();

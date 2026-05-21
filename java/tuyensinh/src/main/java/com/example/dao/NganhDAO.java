@@ -30,6 +30,20 @@ public class NganhDAO {
         }
     }
 
+    public Nganh findByMaNganh(String manganh) {
+        if (manganh == null || manganh.trim().isEmpty()) {
+            return null;
+        }
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<Nganh> q = session.createQuery("FROM Nganh n WHERE n.manganh = :ma", Nganh.class);
+            q.setParameter("ma", manganh.trim());
+            return q.uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public boolean addNganh(Nganh nganh) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

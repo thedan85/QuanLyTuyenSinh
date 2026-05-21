@@ -152,8 +152,8 @@ public class DiemXetTuyenPanel extends JPanel implements RefreshablePanel {
 
         btnTinhLai.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this,
-                    "Tính lại điểm THM, điểm cộng, ưu tiên và điểm xét tuyển cho TẤT CẢ nguyện vọng.\n"
-                            + "Không thay đổi kết quả TRÚNG/Rớt.\nTiếp tục?",
+                    "Tối ưu PT + tổ hợp (theo ngành), rồi tính THM, điểm cộng, ưu tiên và điểm xét tuyển\n"
+                            + "cho TẤT CẢ nguyện vọng. Không đổi kết quả TRÚNG/Rớt.\nTiếp tục?",
                     "Xác nhận",
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE);

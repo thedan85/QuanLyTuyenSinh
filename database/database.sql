@@ -170,7 +170,7 @@ CREATE TABLE `xt_nganh` (
 
 LOCK TABLES `xt_nganh` WRITE;
 /*!40000 ALTER TABLE `xt_nganh` DISABLE KEYS */;
-INSERT INTO `xt_nganh` VALUES (7,'7340101','Quản trị kinh doanh','A01',150,17.50,24.50,'1','1','1','0',15,40,0,'95'),(8,'7310101','Ngành Kinh tế','D01',180,17.00,0.00,'1','0','1','0',10,0,0,'170'),(9,'7140209','Ngành Sư phạm Toán','A00',100,16.50,0.00,'1','1','1','1',10,20,20,'50'),(10,'7220201','Ngôn ngữ Anh','D01',120,18.50,0.00,'1','1','1','0',10,30,0,'80'),(11,'7480201','Công nghệ thông tin','A01',200,18.00,26.00,'1','1','1','1',20,50,30,'100');
+INSERT INTO `xt_nganh` VALUES (7,'7340101','Quản trị kinh doanh','A01',150,17.50,24.50,'1','1','1','0',15,40,0,'95'),(8,'7310101','Ngành Kinh tế','D01',180,17.00,0.00,'1','0','1','0',10,0,0,'170'),(9,'7140209','Ngành Sư phạm Toán','A00',100,16.50,0.00,'1','1','1','1',10,20,20,'50'),(10,'7220201','Ngôn ngữ Anh','D01',120,18.50,0.00,'1','1','1','0',10,30,0,'80'),(11,'7480201','Công nghệ thông tin','A01',200,18.00,26.80,'1','1','1','1',20,50,30,'100');
 /*!40000 ALTER TABLE `xt_nganh` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -231,15 +231,16 @@ CREATE TABLE `xt_nguyenvongxettuyen` (
   `nn_cccd` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `nv_manganh` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `nv_tt` int NOT NULL,
-  `diem_thxt` decimal(10,5) DEFAULT NULL COMMENT 'đã cộng điểm môn chính',
-  `diem_utqd` decimal(10,5) DEFAULT NULL COMMENT 'Điểm UTQD theo tổ họp sẽ khác nhau.',
-  `diem_cong` decimal(6,2) DEFAULT NULL COMMENT 'Tong 3 mon chua tinh mon chinh + diem uu tien\\\\\\\\n',
-  `diem_xettuyen` decimal(10,5) DEFAULT NULL COMMENT 'đã cộng điểm ưu tiên',
-  `nv_ketqua` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `nv_keys` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `tt_phuongthuc` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `tt_thm` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `diem_thxt` decimal(10,5) DEFAULT NULL COMMENT 'Điểm THM thang ~30; NULL trước Tính lại điểm trên app',
+  `diem_utqd` decimal(10,5) DEFAULT NULL COMMENT 'Điểm ưu tiên quy đổi',
+  `diem_cong` decimal(6,2) DEFAULT NULL COMMENT 'Điểm cộng chứng chỉ (tối đa 3)',
+  `diem_xettuyen` decimal(10,5) DEFAULT NULL COMMENT 'Điểm xét tuyển cuối; NULL trước Tính lại điểm',
+  `nv_ketqua` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT 'Chờ xét' COMMENT 'Chờ xét / TRÚNG TUYỂN / Rớt',
+  `nv_keys` varchar(80) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL COMMENT 'Import thô: CCCD_MaNganh_TT; sau tối ưu app có thể đổi',
+  `tt_phuongthuc` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'PT1/PT2/PT3; NULL = chưa tối ưu',
+  `tt_thm` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Mã tổ hợp (A01,D01,...); NULL = chưa tối ưu',
   PRIMARY KEY (`idnv`),
+  UNIQUE KEY `uk_nv_cccd_nganh_tt` (`nn_cccd`,`nv_manganh`,`nv_tt`),
   UNIQUE KEY `nv_keys_UNIQUE` (`nv_keys`)
 ) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -250,7 +251,7 @@ CREATE TABLE `xt_nguyenvongxettuyen` (
 
 LOCK TABLES `xt_nguyenvongxettuyen` WRITE;
 /*!40000 ALTER TABLE `xt_nguyenvongxettuyen` DISABLE KEYS */;
-INSERT INTO `xt_nguyenvongxettuyen` VALUES (24,'001204000001','7480201',1,24.50000,1.00000,0.50,26.00000,'TRÚNG TUYỂN','001204000001_7480201_PT1','PT1','A01'),(27,'001204000001','7340101',2,24.50000,0.00000,0.00,24.50000,'Rớt','001204000001_7340101_PT1','PT1','A01');
+INSERT INTO `xt_nguyenvongxettuyen` VALUES (24,'001204000001','7480201',1,25.50000,0.80000,0.50,26.80000,'TRÚNG TUYỂN','001204000001_7480201_PT1','PT1','A01'),(27,'001204000001','7340101',2,25.50000,0.00000,0.00,25.50000,'Rớt','001204000001_7340101_PT1','PT1','A01');
 /*!40000 ALTER TABLE `xt_nguyenvongxettuyen` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -356,4 +357,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-21 13:38:31
+-- Dump completed on 2026-05-21 17:40:16
