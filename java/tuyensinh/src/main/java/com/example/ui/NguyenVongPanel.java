@@ -11,8 +11,12 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -33,10 +37,8 @@ import javax.swing.table.DefaultTableModel;
 import com.example.dao.NganhDAO;
 import com.example.dao.NguyenVongDAO;
 import com.example.dao.ThiSinhDAO;
-import com.example.dao.ToHopDAO;
 import com.example.entity.Nganh;
 import com.example.entity.NguyenVong;
-import com.example.entity.ToHopMon;
 import com.example.service.XetTuyenService;
 
 public class NguyenVongPanel extends JPanel implements RefreshablePanel {
@@ -46,40 +48,53 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
     private NguyenVongDAO dao;
     private ThiSinhDAO thiSinhDAO;
     private NganhDAO nganhDAO;
-    private ToHopDAO toHopDAO;
-
-    // CHỈ GIỮ LẠI CÁC TRƯỜNG NHẬP LIỆU CƠ BẢN
+    @SuppressWarnings("unused")
     private JTextField txtIdnv, txtNvTt;
-    private JComboBox<String> cbPhuongThuc;
-    private JComboBox<String> cbCccd, cbMaNganh, cbMaToHop;
+    private JComboBox<String> cbCccd, cbMaNganh;
+    private JComboBox<NvSwapOption> cbHoanDoi;
+
+    private final Map<String, String> tenNganhByMa = new HashMap<>();
 
     private JButton btnAdd, btnEdit, btnDelete, btnRefresh, btnImport;
     private JButton btnRunAlgo, btnDanhSachTrung, btnThongKeTrung;
+
+    /** Mục combo hoán đổi TT: "2 - Sư phạm Toán" */
+    private static final class NvSwapOption {
+        final int idnv;
+        final String label;
+
+        NvSwapOption(int idnv, String label) {
+            this.idnv = idnv;
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
 
     public NguyenVongPanel() {
         dao = new NguyenVongDAO();
         thiSinhDAO = new ThiSinhDAO();
         nganhDAO = new NganhDAO();
-        toHopDAO = new ToHopDAO();
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // --- 1. FORM NHẬP LIỆU ---
         txtIdnv = new JTextField();
         txtIdnv.setEditable(false);
         cbCccd = new JComboBox<>();
         cbMaNganh = new JComboBox<>();
-        cbMaToHop = new JComboBox<>();
         txtNvTt = new JTextField();
-        cbPhuongThuc = PhuongThucOptions.newCombo();
-        cbPhuongThuc.setPrototypeDisplayValue("PT3 - V-SAT (VSAT_*)");
-        cbCccd.setPrototypeDisplayValue("001204000001 - Nguyễn Văn A");
+        txtNvTt.setEditable(false);
+        cbHoanDoi = new JComboBox<>();
+        cbHoanDoi.setPrototypeDisplayValue(new NvSwapOption(0, "9 - Tên ngành mẫu dài để hiển thị"));
+        cbCccd.setPrototypeDisplayValue("001204000001");
         cbMaNganh.setPrototypeDisplayValue("7480201 - Công nghệ thông tin");
-        cbMaToHop.setPrototypeDisplayValue("-- Chọn tổ hợp --");
 
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Nhập thông tin Nguyện Vọng cơ bản"),
+                BorderFactory.createTitledBorder("Nhập / hoán đổi Nguyện Vọng (CCCD + Ngành; TT tự tăng khi thêm)"),
                 new EmptyBorder(12, 14, 12, 14)));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -90,16 +105,14 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
         addFormField(formPanel, gbc, 0, 0, "ID NV:", txtIdnv);
         addFormField(formPanel, gbc, 0, 1, "CCCD (*):", cbCccd);
         addFormField(formPanel, gbc, 0, 2, "Mã Ngành (*):", cbMaNganh);
-        addFormField(formPanel, gbc, 1, 0, "Thứ tự NV (*):", txtNvTt);
-        addFormField(formPanel, gbc, 1, 1, "Phương thức (*):", cbPhuongThuc);
-        addFormField(formPanel, gbc, 1, 2, "Tổ hợp:", cbMaToHop);
+        addFormField(formPanel, gbc, 1, 0, "Thứ tự NV:", txtNvTt);
+        addFormField(formPanel, gbc, 1, 1, "Hoán đổi với:", cbHoanDoi);
 
         add(formPanel, BorderLayout.NORTH);
 
-        // --- 2. THANH CÔNG CỤ (2 hàng: CRUD + Xét tuyển) ---
         JPanel crudBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         btnAdd = new JButton("Thêm mới");
-        btnEdit = new JButton("Sửa");
+        btnEdit = new JButton("Cập nhật TT");
         btnDelete = new JButton("Xóa");
         btnRefresh = new JButton("Làm mới form");
         btnImport = new JButton("Import CSV");
@@ -137,18 +150,21 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
         toolNorth.add(crudBar);
         toolNorth.add(xetBar);
 
-        // --- 3. BẢNG DỮ LIỆU (VẪN GIỮ ĐỦ 12 CỘT ĐỂ XEM KẾT QUẢ) ---
-        String[] cols = { "ID", "CCCD", "Mã Ngành", "Thứ tự", "Điểm THXT", "Điểm UTQD", "Cộng", "Tổng Điểm", "Kết quả", "Keys", "PT", "Tổ hợp" };
+        String[] cols = { "ID", "CCCD", "Mã Ngành", "Thứ tự", "Điểm THXT", "Điểm UTQD", "Cộng", "Tổng Điểm",
+                "Kết quả", "Keys", "PT", "Tổ hợp" };
         tableModel = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int row, int column) { return false; }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
         };
         table = new JTable(tableModel);
         UiTableTheme.apply(table);
 
-        // Tô màu Trúng Tuyển / Rớt (nền zebra/hover do UiTableTheme)
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 UiTableTheme.applyColumnAlignment(table, c, column);
                 UiTableTheme.applyDataRowAppearance(table, c, row, isSelected);
@@ -156,17 +172,26 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
                     String colName = table.getColumnName(column);
                     if (colName != null && colName.toLowerCase().contains("kết quả") && value != null) {
                         if (value.toString().contains("TRÚNG TUYỂN")) {
-                            c.setForeground(new Color(0, 150, 0)); c.setFont(c.getFont().deriveFont(Font.BOLD));
+                            c.setForeground(new Color(0, 150, 0));
+                            c.setFont(c.getFont().deriveFont(Font.BOLD));
                         } else if (value.toString().contains("Rớt")) {
-                            c.setForeground(Color.RED); c.setFont(c.getFont().deriveFont(Font.PLAIN));
-                        } else { c.setForeground(Color.BLACK); c.setFont(c.getFont().deriveFont(Font.PLAIN)); }
-                    } else { c.setForeground(Color.BLACK); c.setFont(c.getFont().deriveFont(Font.PLAIN)); }
+                            c.setForeground(Color.RED);
+                            c.setFont(c.getFont().deriveFont(Font.PLAIN));
+                        } else {
+                            c.setForeground(Color.BLACK);
+                            c.setFont(c.getFont().deriveFont(Font.PLAIN));
+                        }
+                    } else {
+                        c.setForeground(Color.BLACK);
+                        c.setFont(c.getFont().deriveFont(Font.PLAIN));
+                    }
                 }
                 return c;
             }
         });
 
-        tableScroll = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        tableScroll = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         UiTableColumns.install(table, tableScroll);
 
         JPanel centerContainer = new JPanel(new BorderLayout());
@@ -183,11 +208,15 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
             public void componentShown(java.awt.event.ComponentEvent e) {
                 Object selCccd = cbCccd.getSelectedItem();
                 Object selNganh = cbMaNganh.getSelectedItem();
-                Object selToHop = cbMaToHop.getSelectedItem();
                 loadComboBoxData();
-                if (selCccd != null) cbCccd.setSelectedItem(selCccd);
-                if (selNganh != null) cbMaNganh.setSelectedItem(selNganh);
-                if (selToHop != null) cbMaToHop.setSelectedItem(selToHop);
+                if (selCccd != null) {
+                    cbCccd.setSelectedItem(selCccd);
+                }
+                if (selNganh != null) {
+                    cbMaNganh.setSelectedItem(selNganh);
+                }
+                refreshThuTuSuggest();
+                refreshHoanDoiCombo();
                 UiTableColumns.refresh(table);
             }
         });
@@ -199,10 +228,10 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
         if (list != null) {
             for (NguyenVong n : list) {
                 tableModel.addRow(new Object[] {
-                    n.getIdnv(), n.getTsCccd(), n.getMaNganh(), n.getThuTuNV(),
-                    n.getDiemThxt(), n.getDiemUtqd(), n.getDiemCong(), n.getDiemXetTuyen(),
-                    n.getKetQua() == null ? "Chờ xét" : n.getKetQua(), 
-                    n.getNvKeys(), n.getPhuongThuc(), n.getMaToHop()
+                        n.getIdnv(), n.getTsCccd(), n.getMaNganh(), n.getThuTuNV(),
+                        n.getDiemThxt(), n.getDiemUtqd(), n.getDiemCong(), n.getDiemXetTuyen(),
+                        n.getKetQua() == null ? "Chờ xét" : n.getKetQua(),
+                        n.getNvKeys(), n.getPhuongThuc(), n.getMaToHop()
                 });
             }
         }
@@ -213,15 +242,21 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
     public void refreshData() {
         Object selCccd = cbCccd.getSelectedItem();
         Object selNganh = cbMaNganh.getSelectedItem();
-        Object selToHop = cbMaToHop.getSelectedItem();
         loadComboBoxData();
-        if (selCccd != null) cbCccd.setSelectedItem(selCccd);
-        if (selNganh != null) cbMaNganh.setSelectedItem(selNganh);
-        if (selToHop != null) cbMaToHop.setSelectedItem(selToHop);
+        if (selCccd != null) {
+            cbCccd.setSelectedItem(selCccd);
+        }
+        if (selNganh != null) {
+            cbMaNganh.setSelectedItem(selNganh);
+        }
+        refreshThuTuSuggest();
+        refreshHoanDoiCombo();
         loadData();
     }
 
     private void loadComboBoxData() {
+        tenNganhByMa.clear();
+
         cbCccd.removeAllItems();
         cbCccd.addItem("-- Chọn CCCD --");
         List<com.example.entity.ThiSinh> listThiSinh = thiSinhDAO.getAllThiSinh();
@@ -239,18 +274,25 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
         List<Nganh> listNganh = nganhDAO.getAllNganh();
         if (listNganh != null) {
             for (Nganh n : listNganh) {
-                cbMaNganh.addItem(n.getManganh());
+                String ma = n.getManganh();
+                String ten = n.getTennganh() != null ? n.getTennganh() : ma;
+                tenNganhByMa.put(ma, ten);
+                cbMaNganh.addItem(ma + " - " + ten);
             }
         }
+    }
 
-        cbMaToHop.removeAllItems();
-        cbMaToHop.addItem("-- Chọn Tổ hợp --");
-        List<ToHopMon> listToHop = toHopDAO.getAllToHop();
-        if (listToHop != null) {
-            for (ToHopMon th : listToHop) {
-                cbMaToHop.addItem(th.getMatohop());
-            }
+    private String getSelectedCccd() {
+        return getSelectedValue(cbCccd);
+    }
+
+    private String parseMaNganhFromCombo() {
+        String raw = getSelectedValue(cbMaNganh);
+        if (raw.isEmpty()) {
+            return "";
         }
+        int sep = raw.indexOf(" - ");
+        return sep > 0 ? raw.substring(0, sep).trim() : raw.trim();
     }
 
     private String getSelectedValue(JComboBox<String> combo) {
@@ -262,108 +304,151 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
         return value.startsWith("--") ? "" : value;
     }
 
-    private void selectComboItem(JComboBox<String> combo, String value) {
-        if (value == null || value.isEmpty()) {
+    private void selectCccdItem(String cccd) {
+        if (cccd == null || cccd.isEmpty()) {
+            cbCccd.setSelectedIndex(0);
+            return;
+        }
+        for (int i = 0; i < cbCccd.getItemCount(); i++) {
+            if (cccd.equals(cbCccd.getItemAt(i))) {
+                cbCccd.setSelectedIndex(i);
+                return;
+            }
+        }
+        cbCccd.addItem(cccd);
+        cbCccd.setSelectedItem(cccd);
+    }
+
+    private void selectComboItem(JComboBox<String> combo, String maNganh) {
+        if (maNganh == null || maNganh.isEmpty()) {
             combo.setSelectedIndex(0);
             return;
         }
-        boolean found = false;
+        String ten = tenNganhByMa.getOrDefault(maNganh, maNganh);
+        String display = maNganh + " - " + ten;
         for (int i = 0; i < combo.getItemCount(); i++) {
-            if (value.equals(combo.getItemAt(i))) {
-                found = true;
-                break;
+            if (display.equals(combo.getItemAt(i)) || maNganh.equals(combo.getItemAt(i))) {
+                combo.setSelectedIndex(i);
+                return;
             }
         }
-        if (!found) {
-            combo.addItem(value);
+        combo.addItem(display);
+        combo.setSelectedItem(display);
+    }
+
+    private void refreshThuTuSuggest() {
+        String cccd = getSelectedCccd();
+        if (cccd.isEmpty()) {
+            txtNvTt.setText("");
+            return;
         }
-        combo.setSelectedItem(value);
+        if (txtIdnv.getText().isEmpty()) {
+            txtNvTt.setText(String.valueOf(dao.suggestNextThuTu(cccd)));
+        }
+    }
+
+    private void refreshHoanDoiCombo() {
+        cbHoanDoi.removeAllItems();
+        cbHoanDoi.addItem(null);
+        String cccd = getSelectedCccd();
+        if (cccd.isEmpty()) {
+            return;
+        }
+        List<NguyenVong> list = dao.findByCccd(cccd);
+        for (NguyenVong nv : list) {
+            String ten = tenNganhByMa.getOrDefault(nv.getMaNganh(), nv.getMaNganh());
+            cbHoanDoi.addItem(new NvSwapOption(nv.getIdnv(), nv.getThuTuNV() + " - " + ten));
+        }
     }
 
     private void clearForm() {
         txtIdnv.setText("");
         cbCccd.setSelectedIndex(0);
         cbMaNganh.setSelectedIndex(0);
-        cbMaToHop.setSelectedIndex(0);
         txtNvTt.setText("");
-        PhuongThucOptions.select(cbPhuongThuc, PhuongThucOptions.PT1);
+        cbHoanDoi.removeAllItems();
         cbCccd.setEnabled(true);
         cbMaNganh.setEnabled(true);
-        cbPhuongThuc.setEnabled(true);
         table.clearSelection();
     }
 
     private void setupEvents() {
-        btnRefresh.addActionListener(e -> { loadData(); clearForm(); });
+        btnRefresh.addActionListener(e -> {
+            loadData();
+            clearForm();
+        });
+
+        cbCccd.addActionListener(e -> {
+            refreshThuTuSuggest();
+            refreshHoanDoiCombo();
+        });
+
+        cbMaNganh.addActionListener(e -> {
+            String cccd = getSelectedCccd();
+            String ma = parseMaNganhFromCombo();
+            if (!cccd.isEmpty() && !ma.isEmpty() && txtIdnv.getText().isEmpty()
+                    && dao.isCccdNganhExists(cccd, ma)) {
+                JOptionPane.showMessageDialog(this,
+                        "Thí sinh đã đăng ký ngành " + ma + " rồi!",
+                        "Trùng ngành",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+        });
 
         table.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) {
+                return;
+            }
             int row = table.getSelectedRow();
             if (row >= 0) {
-                // Chỉ lấy các dữ liệu cơ bản đắp lên Form
                 txtIdnv.setText(table.getValueAt(row, 0).toString());
-                selectComboItem(cbCccd, table.getValueAt(row, 1).toString());
+                selectCccdItem(table.getValueAt(row, 1).toString());
                 selectComboItem(cbMaNganh, table.getValueAt(row, 2).toString());
                 txtNvTt.setText(table.getValueAt(row, 3).toString());
-                PhuongThucOptions.select(cbPhuongThuc,
-                        table.getValueAt(row, 10) != null ? table.getValueAt(row, 10).toString() : "");
-                selectComboItem(cbMaToHop, table.getValueAt(row, 11) != null ? table.getValueAt(row, 11).toString() : "");
-                
                 cbCccd.setEnabled(false);
                 cbMaNganh.setEnabled(false);
-                cbPhuongThuc.setEnabled(false);
+                refreshHoanDoiCombo();
             }
         });
 
         btnAdd.addActionListener(e -> {
-            NguyenVong nv = getDataFromForm();
-            if (nv == null) return;
-
-            if (dao.isThuTuExists(nv.getTsCccd(), nv.getThuTuNV())) {
-                JOptionPane.showMessageDialog(this, "Thí sinh này đã dùng thứ tự nguyện vọng này rồi!");
+            NguyenVong nv = buildRawNguyenVongForAdd();
+            if (nv == null) {
                 return;
             }
-
-            if (dao.isNganhToHopExists(nv.getTsCccd(), nv.getMaNganh(), nv.getMaToHop())) {
-                JOptionPane.showMessageDialog(this, "Thí sinh này đã đăng ký ngành + tổ hợp này rồi!");
+            if (dao.isCccdNganhExists(nv.getTsCccd(), nv.getMaNganh())) {
+                JOptionPane.showMessageDialog(this, "Thí sinh đã đăng ký ngành này rồi!");
                 return;
             }
-
             if (dao.add(nv)) {
-                JOptionPane.showMessageDialog(this, "Thêm nguyện vọng thô thành công. Vui lòng bấm 'Chạy Xét Tuyển' để tính điểm!");
-                loadData(); clearForm();
+                JOptionPane.showMessageDialog(this,
+                        "Đã thêm NV thứ tự " + nv.getThuTuNV()
+                                + ". Bấm Tính lại điểm (tab Điểm XT) hoặc CHẠY XÉT TUYỂN.");
+                loadData();
+                clearForm();
+            } else {
+                JOptionPane.showMessageDialog(this, "Không thêm được (trùng khóa hoặc lỗi DB).");
             }
         });
 
-        btnEdit.addActionListener(e -> {
-            if (txtIdnv.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Chọn nguyện vọng để sửa!"); return;
-            }
-            NguyenVong nv = getDataFromForm();
-            if (nv == null) return;
-
-            if (dao.isThuTuExistsExcept(nv.getTsCccd(), nv.getThuTuNV(), nv.getIdnv())) {
-                JOptionPane.showMessageDialog(this, "Thứ tự nguyện vọng bị trùng trong cùng thí sinh!");
-                return;
-            }
-
-            if (dao.isNganhToHopExistsExcept(nv.getTsCccd(), nv.getMaNganh(), nv.getMaToHop(), nv.getIdnv())) {
-                JOptionPane.showMessageDialog(this, "Thí sinh này đã đăng ký ngành + tổ hợp này rồi!");
-                return;
-            }
-
-            if (dao.update(nv)) { loadData(); clearForm(); }
-        });
+        btnEdit.addActionListener(e -> hoanDoiThuTu());
 
         btnDelete.addActionListener(e -> {
-            if (txtIdnv.getText().isEmpty()) return;
-            if (JOptionPane.showConfirmDialog(this, "Xóa nguyện vọng này?", "Xác nhận", JOptionPane.YES_NO_OPTION) == 0) {
-                if (dao.delete(Integer.parseInt(txtIdnv.getText()))) { loadData(); clearForm(); }
+            if (txtIdnv.getText().isEmpty()) {
+                return;
+            }
+            if (JOptionPane.showConfirmDialog(this, "Xóa nguyện vọng này?", "Xác nhận",
+                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                if (dao.delete(Integer.parseInt(txtIdnv.getText()))) {
+                    loadData();
+                    clearForm();
+                }
             }
         });
 
         btnImport.addActionListener(e -> {
-            // Mở hộp thoại chọn file và Import (Logic import đã tối giản ở phần dưới)
             JFileChooser fc = new JFileChooser();
+            fc.setDialogTitle("Chọn file CSV nguyện vọng (3 cột)");
             if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 importCSV(fc.getSelectedFile());
             }
@@ -374,10 +459,10 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
 
         btnRunAlgo.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this,
-                "Tính lại điểm và xét trúng/rớt cho tất cả nguyện vọng. Tiếp tục?",
-                "Xác nhận Xét Tuyển",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE);
+                "Tối ưu PT/tổ hợp, tính lại điểm và xét trúng/rớt cho tất cả nguyện vọng. Tiếp tục?",
+                    "Xác nhận Xét Tuyển",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
                     setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -387,7 +472,8 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
                     JOptionPane.showMessageDialog(this, "✅ Đã chạy thuật toán xong! Xem cột Kết quả.");
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(this, "Lỗi tính toán: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Lỗi tính toán: " + ex.getMessage(), "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
                 } finally {
                     setCursor(Cursor.getDefaultCursor());
                 }
@@ -395,109 +481,174 @@ public class NguyenVongPanel extends JPanel implements RefreshablePanel {
         });
     }
 
-    private NguyenVong getDataFromForm() {
-        try {
-            String cccd = getSelectedValue(cbCccd);
-            String maNganh = getSelectedValue(cbMaNganh);
-            String maToHop = getSelectedValue(cbMaToHop);
-
-            String phuongThuc = PhuongThucOptions.getCode(cbPhuongThuc);
-            if (cccd.isEmpty() || maNganh.isEmpty() || phuongThuc.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ CCCD, Mã Ngành, Phương thức!");
-                return null;
-            }
-
-            if (!thiSinhDAO.isCccdExists(cccd)) {
-                JOptionPane.showMessageDialog(this, "CCCD chưa tồn tại trong bảng thí sinh!");
-                return null;
-            }
-            if (!nganhDAO.isMaNganhExists(maNganh)) {
-                JOptionPane.showMessageDialog(this, "Mã ngành không tồn tại!");
-                return null;
-            }
-            if (!maToHop.isEmpty() && !toHopDAO.isMaToHopExists(maToHop)) {
-                JOptionPane.showMessageDialog(this, "Tổ hợp môn không tồn tại!");
-                return null;
-            }
-
-            NguyenVong nv = new NguyenVong();
-            if (!txtIdnv.getText().isEmpty()) nv.setIdnv(Integer.parseInt(txtIdnv.getText()));
-
-            // Chỉ lấy 5 thông tin cơ bản
-            nv.setTsCccd(cccd);
-            nv.setMaNganh(maNganh);
-            nv.setThuTuNV(Integer.parseInt(txtNvTt.getText().trim()));
-            nv.setPhuongThuc(phuongThuc);
-            nv.setMaToHop(maToHop);
-
-            // CÁC CỘT CÒN LẠI TỰ GÁN VỀ 0 HOẶC TRỐNG ĐỂ CHỜ THUẬT TOÁN TÍNH
-            nv.setDiemThxt(0.0);
-            nv.setDiemUtqd(0.0);
-            nv.setDiemCong(0.0);
-            nv.setDiemXetTuyen(0.0);
-            nv.setKetQua("Chờ xét");
-
-            nv.setNvKeys(nv.getTsCccd() + "_" + nv.getMaNganh() + "_" + nv.getMaToHop());
-            return nv;
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Thứ tự NV phải là số nguyên!");
-            return null;
+    private void hoanDoiThuTu() {
+        if (txtIdnv.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Chọn một dòng trên bảng (nguyện vọng nguồn), rồi chọn mục hoán đổi và bấm Cập nhật TT.");
+            return;
+        }
+        NvSwapOption target = (NvSwapOption) cbHoanDoi.getSelectedItem();
+        if (target == null) {
+            JOptionPane.showMessageDialog(this, "Chọn nguyện vọng đích trong ô \"Hoán đổi với\".");
+            return;
+        }
+        int idNguon = Integer.parseInt(txtIdnv.getText().trim());
+        if (idNguon == target.idnv) {
+            JOptionPane.showMessageDialog(this, "Chọn hai nguyện vọng khác nhau để hoán đổi.");
+            return;
+        }
+        if (dao.swapThuTu(idNguon, target.idnv)) {
+            JOptionPane.showMessageDialog(this, "Đã hoán đổi thứ tự nguyện vọng.");
+            loadData();
+            clearForm();
+        } else {
+            JOptionPane.showMessageDialog(this, "Không hoán đổi được (kiểm tra cùng CCCD / DB).");
         }
     }
 
-    // Hàm Import CSV rút gọn (Chỉ đọc 5 cột cơ bản)
+    private NguyenVong buildRawNguyenVongForAdd() {
+        String cccd = getSelectedCccd();
+        String maNganh = parseMaNganhFromCombo();
+        if (cccd.isEmpty() || maNganh.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn CCCD và Mã ngành!");
+            return null;
+        }
+        if (!thiSinhDAO.isCccdExists(cccd)) {
+            JOptionPane.showMessageDialog(this, "CCCD chưa tồn tại trong bảng thí sinh!");
+            return null;
+        }
+        if (!nganhDAO.isMaNganhExists(maNganh)) {
+            JOptionPane.showMessageDialog(this, "Mã ngành không tồn tại!");
+            return null;
+        }
+
+        int tt = dao.suggestNextThuTu(cccd);
+        txtNvTt.setText(String.valueOf(tt));
+
+        NguyenVong nv = new NguyenVong();
+        nv.setTsCccd(cccd);
+        nv.setMaNganh(maNganh);
+        nv.setThuTuNV(tt);
+        nv.setPhuongThuc(null);
+        nv.setMaToHop(null);
+        nv.setDiemThxt(null);
+        nv.setDiemUtqd(null);
+        nv.setDiemCong(null);
+        nv.setDiemXetTuyen(null);
+        nv.setKetQua("Chờ xét");
+        nv.setNvKeys(cccd + "_" + maNganh + "_" + tt);
+        return nv;
+    }
+
+    /**
+     * Import NV thô (Hybrid): 3 cột CSV — CCCD, Mã ngành, Thứ tự NV.
+     * PT/tổ hợp/điểm để NULL; sau đó dùng Tính lại điểm hoặc CHẠY XÉT TUYỂN.
+     */
     private void importCSV(File file) {
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line; boolean first = true;
-            int success = 0, duplicate = 0, invalid = 0;
+        int success = 0, duplicate = 0, invalid = 0;
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            String line;
+            boolean skippedHeader = false;
             while ((line = br.readLine()) != null) {
-                if (first) { first = false; continue; }
+                line = line.trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
                 String[] data = line.split(",", -1);
-                
-                if (data.length >= 5) { 
-                    NguyenVong nv = new NguyenVong();
-                    nv.setTsCccd(data[0].trim());
-                    nv.setMaNganh(data[1].trim());
-                    nv.setThuTuNV(data[2].trim().isEmpty() ? 99 : Integer.parseInt(data[2].trim()));
-                    nv.setPhuongThuc(PhuongThucOptions.toCode(data[3]));
-                    nv.setMaToHop(data[4].trim());
+                if (data.length < 3) {
+                    invalid++;
+                    continue;
+                }
+                if (!skippedHeader && isImportHeaderRow(data)) {
+                    skippedHeader = true;
+                    continue;
+                }
+                skippedHeader = true;
 
-                    if (nv.getTsCccd().isEmpty() || nv.getMaNganh().isEmpty() || nv.getPhuongThuc().isEmpty()) {
-                        invalid++;
-                        continue;
-                    }
-                    if (!thiSinhDAO.isCccdExists(nv.getTsCccd())) {
-                        invalid++;
-                        continue;
-                    }
-                    if (!nganhDAO.isMaNganhExists(nv.getMaNganh())) {
-                        invalid++;
-                        continue;
-                    }
-                    if (!nv.getMaToHop().isEmpty() && !toHopDAO.isMaToHopExists(nv.getMaToHop())) {
-                        invalid++;
-                        continue;
-                    }
-                    if (dao.isThuTuExists(nv.getTsCccd(), nv.getThuTuNV())) {
-                        duplicate++;
-                        continue;
-                    }
+                String cccd = stripBom(data[0].trim());
+                String maNganh = data[1].trim();
+                String ttRaw = data[2].trim();
 
-                    // Các cột điểm gán mặc định
-                    nv.setDiemThxt(0.0); nv.setDiemUtqd(0.0); nv.setDiemCong(0.0); nv.setDiemXetTuyen(0.0);
-                    nv.setKetQua("Chờ xét");
-                    nv.setNvKeys(nv.getTsCccd() + "_" + nv.getMaNganh() + "_" + nv.getMaToHop());
+                if (cccd.isEmpty() || maNganh.isEmpty() || ttRaw.isEmpty()) {
+                    invalid++;
+                    continue;
+                }
 
-                    if (!dao.isNganhToHopExists(nv.getTsCccd(), nv.getMaNganh(), nv.getMaToHop())) {
-                        if (dao.add(nv)) success++;
-                    } else duplicate++;
+                int thuTu;
+                try {
+                    thuTu = Integer.parseInt(ttRaw);
+                    if (thuTu < 1) {
+                        invalid++;
+                        continue;
+                    }
+                } catch (NumberFormatException e) {
+                    invalid++;
+                    continue;
+                }
+
+                if (!thiSinhDAO.isCccdExists(cccd)) {
+                    invalid++;
+                    continue;
+                }
+                if (!nganhDAO.isMaNganhExists(maNganh)) {
+                    invalid++;
+                    continue;
+                }
+                if (dao.isCccdNganhExists(cccd, maNganh)) {
+                    duplicate++;
+                    continue;
+                }
+                if (dao.isThuTuExists(cccd, thuTu)) {
+                    duplicate++;
+                    continue;
+                }
+
+                NguyenVong nv = new NguyenVong();
+                nv.setTsCccd(cccd);
+                nv.setMaNganh(maNganh);
+                nv.setThuTuNV(thuTu);
+                nv.setPhuongThuc(null);
+                nv.setMaToHop(null);
+                nv.setDiemThxt(null);
+                nv.setDiemUtqd(null);
+                nv.setDiemCong(null);
+                nv.setDiemXetTuyen(null);
+                nv.setKetQua("Chờ xét");
+                nv.setNvKeys(cccd + "_" + maNganh + "_" + thuTu);
+
+                if (dao.add(nv)) {
+                    success++;
+                } else {
+                    duplicate++;
                 }
             }
-            JOptionPane.showMessageDialog(this, "Import xong!\nThành công: " + success + "\nBỏ qua trùng: " + duplicate + "\nKhông hợp lệ: " + invalid);
+            JOptionPane.showMessageDialog(this,
+                    "Import xong!\nThành công: " + success + "\nBỏ qua trùng: " + duplicate + "\nKhông hợp lệ: "
+                            + invalid
+                            + "\n\nFile CSV: 3 cột (CCCD, Mã ngành, Thứ tự NV). Excel → Lưu dạng CSV UTF-8.",
+                    "Import nguyện vọng",
+                    JOptionPane.INFORMATION_MESSAGE);
             loadData();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi CSV! Yêu cầu file có 5 cột: CCCD, Ngành, TT, PT, Tổ hợp");
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi đọc file!\nCần CSV UTF-8, 3 cột: CCCD, Mã ngành, Thứ tự NV (dòng 1 có thể là tiêu đề).",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private static boolean isImportHeaderRow(String[] data) {
+        String c0 = stripBom(data[0].trim().toLowerCase());
+        return c0.contains("cccd") || c0.equals("stt") || c0.contains("mã ngành") || c0.contains("ma nganh");
+    }
+
+    private static String stripBom(String s) {
+        if (s != null && s.startsWith("\uFEFF")) {
+            return s.substring(1);
+        }
+        return s;
     }
 
     private static void addFormField(JPanel form, GridBagConstraints gbc, int row, int col,

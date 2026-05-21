@@ -22,6 +22,8 @@ import com.example.utils.HibernateUtil;
 
 public class XetTuyenService {
 
+    private static final String[] PT_XET_TUYEN = { "PT1", "PT2", "PT3" };
+
     private final BangQuyDoiDAO bangQuyDoiDAO = new BangQuyDoiDAO();
 
     /** Chỉ tính lại điểm (THPT / quy đổi ĐGNL-VSAT), không đổi kết quả trúng tuyển. */
@@ -32,6 +34,7 @@ public class XetTuyenService {
             tx = session.beginTransaction();
             List<NguyenVong> dsNguyenVong = session.createQuery("FROM NguyenVong", NguyenVong.class).list();
             for (NguyenVong nv : dsNguyenVong) {
+                toiUuPhuongThucVaToHop(session, nv);
                 tinhDiemChoNguyenVong(session, nv);
                 session.update(nv);
             }
@@ -57,6 +60,7 @@ public class XetTuyenService {
             List<NguyenVong> dsNguyenVong = session.createQuery("FROM NguyenVong", NguyenVong.class).list();
 
             for (NguyenVong nv : dsNguyenVong) {
+                toiUuPhuongThucVaToHop(session, nv);
                 tinhDiemChoNguyenVong(session, nv);
                 session.update(nv);
             }
@@ -74,18 +78,91 @@ public class XetTuyenService {
         }
     }
 
-    private void tinhDiemChoNguyenVong(Session session, NguyenVong nv) {
-        String cccd = nv.getTsCccd();
+    /**
+     * Quét mọi (PT × tổ hợp) ngành chấp nhận, chọn combo có điểm xét tuyển cao nhất.
+     * Ghi {@code tt_phuongthuc}, {@code tt_thm}, {@code nv_keys} (CCCD_ngành_tổ_hợp_PT).
+     */
+    private void toiUuPhuongThucVaToHop(Session session, NguyenVong nv) {
         String maNganh = nv.getMaNganh();
-        String maToHop = nv.getMaToHop();
-        String phuongThuc = nv.getPhuongThuc();
+        String cccd = nv.getTsCccd();
+        if (maNganh == null || maNganh.trim().isEmpty() || cccd == null || cccd.trim().isEmpty()) {
+            return;
+        }
+
+        Query<Nganh> qNganh = session.createQuery("FROM Nganh n WHERE n.manganh = :ma", Nganh.class);
+        qNganh.setParameter("ma", maNganh.trim());
+        Nganh nganh = qNganh.uniqueResult();
+        if (nganh == null) {
+            return;
+        }
+
+        List<NganhToHop> toHops = session.createQuery(
+                "FROM NganhToHop n WHERE n.manganh = :ma", NganhToHop.class)
+                .setParameter("ma", maNganh.trim())
+                .list();
+        if (toHops == null || toHops.isEmpty()) {
+            return;
+        }
 
         Query<DiemThi> qDiemThi = session.createQuery("FROM DiemThi WHERE cccd = :cccd", DiemThi.class);
         qDiemThi.setParameter("cccd", cccd);
         DiemThi dt = qDiemThi.uniqueResult();
 
+        String bestPt = null;
+        String bestTh = null;
+        double bestXt = -1.0;
+        double bestThxt = -1.0;
+
+        for (String pt : PT_XET_TUYEN) {
+            String loai = resolveLoaiXetTuyen(pt);
+            if (!nganhCoNhanPt(nganh, loai)) {
+                continue;
+            }
+            for (NganhToHop nth : toHops) {
+                String maTh = nth.getMatohop();
+                if (maTh == null || maTh.trim().isEmpty()) {
+                    continue;
+                }
+                KetQuaDiem kq = tinhKetQuaDiem(session, nv, dt, maNganh, maTh.trim(), pt);
+                double xt = kq.diemXetTuyen;
+                if (xt > bestXt || (xt == bestXt && kq.diemThxt > bestThxt)) {
+                    bestXt = xt;
+                    bestThxt = kq.diemThxt;
+                    bestPt = pt;
+                    bestTh = maTh.trim();
+                }
+            }
+        }
+
+        if (bestPt != null && bestTh != null) {
+            nv.setPhuongThuc(bestPt);
+            nv.setMaToHop(bestTh);
+            nv.setNvKeys(cccd + "_" + maNganh.trim() + "_" + bestTh + "_" + bestPt);
+        }
+    }
+
+    private void tinhDiemChoNguyenVong(Session session, NguyenVong nv) {
+        String maToHop = nv.getMaToHop();
+        String phuongThuc = nv.getPhuongThuc();
+        if (maToHop == null || maToHop.isEmpty() || phuongThuc == null || phuongThuc.isEmpty()) {
+            return;
+        }
+
+        Query<DiemThi> qDiemThi = session.createQuery("FROM DiemThi WHERE cccd = :cccd", DiemThi.class);
+        qDiemThi.setParameter("cccd", nv.getTsCccd());
+        DiemThi dt = qDiemThi.uniqueResult();
+
+        KetQuaDiem kq = tinhKetQuaDiem(session, nv, dt, nv.getMaNganh(), maToHop, phuongThuc);
+        nv.setDiemThxt(round5(kq.diemThxt));
+        nv.setDiemCong(round5(kq.diemCong));
+        nv.setDiemUtqd(round5(kq.diemUtqd));
+        nv.setDiemXetTuyen(round5(kq.diemXetTuyen));
+    }
+
+    private KetQuaDiem tinhKetQuaDiem(Session session, NguyenVong nv, DiemThi dt,
+            String maNganh, String maToHop, String phuongThuc) {
+        String cccd = nv.getTsCccd();
         double diemThxt = tinhDiemThxt(session, dt, maNganh, maToHop, phuongThuc);
-        nv.setDiemThxt(round5(diemThxt));
 
         double diemCongCC = (nv.getDiemCong() != null) ? nv.getDiemCong() : 0.0;
         double diemUtxtGoc = (nv.getDiemUtqd() != null) ? nv.getDiemUtqd() : 0.0;
@@ -102,7 +179,6 @@ public class XetTuyenService {
         if (diemCongCC > 3.0) {
             diemCongCC = 3.0;
         }
-        nv.setDiemCong(diemCongCC);
 
         double tongChuaUT = diemThxt + diemCongCC;
         double diemUtqd = diemUtxtGoc;
@@ -110,16 +186,28 @@ public class XetTuyenService {
         if (tongChuaUT >= 22.5) {
             diemUtqd = ((30.0 - tongChuaUT) / 7.5) * diemUtxtGoc;
         }
-
-        if (diemUtqd < 0)
+        if (diemUtqd < 0) {
             diemUtqd = 0.0;
-        nv.setDiemUtqd(round5(diemUtqd));
+        }
 
         double diemXetTuyen = tongChuaUT + diemUtqd;
         if (diemXetTuyen > 30.0) {
             diemXetTuyen = 30.0;
         }
-        nv.setDiemXetTuyen(round5(diemXetTuyen));
+
+        KetQuaDiem kq = new KetQuaDiem();
+        kq.diemThxt = diemThxt;
+        kq.diemCong = diemCongCC;
+        kq.diemUtqd = diemUtqd;
+        kq.diemXetTuyen = diemXetTuyen;
+        return kq;
+    }
+
+    private static final class KetQuaDiem {
+        double diemThxt;
+        double diemCong;
+        double diemUtqd;
+        double diemXetTuyen;
     }
 
     /**
