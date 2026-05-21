@@ -1,4 +1,4 @@
-CREATE DATABASE  IF NOT EXISTS `xettuyen2026` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE  IF NOT EXISTS `xettuyen2026` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `xettuyen2026`;
 -- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
 --
@@ -26,15 +26,15 @@ DROP TABLE IF EXISTS `xt_bangquydoi`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `xt_bangquydoi` (
   `idqd` int NOT NULL AUTO_INCREMENT,
-  `d_phuongthuc` varchar(45) DEFAULT NULL,
-  `d_tohop` varchar(45) DEFAULT NULL,
-  `d_mon` varchar(45) DEFAULT NULL,
+  `d_phuongthuc` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `d_tohop` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `d_mon` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `d_diema` decimal(6,2) DEFAULT NULL,
   `d_diemb` decimal(6,2) DEFAULT NULL,
   `d_diemc` decimal(6,2) DEFAULT NULL,
   `d_diemd` decimal(6,2) DEFAULT NULL,
-  `d_maquydoi` varchar(45) DEFAULT NULL,
-  `d_phanvi` varchar(45) DEFAULT NULL,
+  `d_maquydoi` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `d_phanvi` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`idqd`),
   UNIQUE KEY `d_maquydoi_UNIQUE` (`d_maquydoi`)
 ) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -60,14 +60,14 @@ DROP TABLE IF EXISTS `xt_diemcongxetuyen`;
 CREATE TABLE `xt_diemcongxetuyen` (
   `iddiemcong` int unsigned NOT NULL AUTO_INCREMENT,
   `ts_cccd` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `manganh` varchar(20) DEFAULT '0.00',
-  `matohop` varchar(10) DEFAULT '0.00',
-  `phuongthuc` varchar(45) DEFAULT NULL,
+  `manganh` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT '0.00',
+  `matohop` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT '0.00',
+  `phuongthuc` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `diemCC` decimal(6,2) DEFAULT NULL,
   `diemUtxt` decimal(6,2) DEFAULT NULL,
   `diemTong` decimal(6,2) DEFAULT '0.00',
-  `ghichu` text,
-  `dc_keys` varchar(45) NOT NULL,
+  `ghichu` text COLLATE utf8mb4_unicode_ci,
+  `dc_keys` varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`iddiemcong`),
   UNIQUE KEY `dc_keys_UNIQUE` (`dc_keys`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -92,9 +92,8 @@ DROP TABLE IF EXISTS `xt_diemthixettuyen`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `xt_diemthixettuyen` (
   `iddiemthi` int NOT NULL AUTO_INCREMENT,
-  `cccd` varchar(20) NOT NULL,
-  `sobaodanh` varchar(45) DEFAULT NULL,
-  `d_phuongthuc` varchar(10) DEFAULT NULL,
+  `cccd` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sobaodanh` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `TO` decimal(8,2) DEFAULT '0.00',
   `LI` decimal(8,2) DEFAULT '0.00',
   `HO` decimal(8,2) DEFAULT '0.00',
@@ -134,23 +133,7 @@ CREATE TABLE `xt_diemthixettuyen` (
 
 LOCK TABLES `xt_diemthixettuyen` WRITE;
 /*!40000 ALTER TABLE `xt_diemthixettuyen` DISABLE KEYS */;
-INSERT INTO `xt_diemthixettuyen` (
-  `iddiemthi`, `cccd`, `sobaodanh`, `d_phuongthuc`,
-  `TO`, `LI`, `HO`, `SI`, `SU`, `DI`, `VA`,
-  `N1_THI`, `N1_CC`, `CNCN`, `CNNN`, `TI`, `KTPL`,
-  `VSAT_TO`, `VSAT_LI`, `VSAT_HO`, `VSAT_SI`, `VSAT_SU`, `VSAT_DI`, `VSAT_VA`, `VSAT_N1`,
-  `NL1`, `NK1`, `NK2`, `NK3`, `NK4`, `NK5`, `NK6`
-) VALUES
-(1,'001204000001','SGU001','PT1',8.50,7.00,6.50,0.00,0.00,0.00,7.50,8.00,9.00,8.00,0.00,7.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(2,'001204000002','SGU002','PT1',9.00,8.50,9.00,0.00,0.00,0.00,6.00,7.50,7.50,0.00,0.00,0.00,8.50,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(3,'001204000003','SGU003','PT1',7.00,0.00,0.00,0.00,8.00,8.50,8.00,6.00,6.00,0.00,0.00,0.00,7.50,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(4,'001204000004','SGU004','PT2',0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,850.00,NULL,NULL,NULL,NULL,NULL,NULL),
-(5,'001204000005','SGU005','PT1',8.00,8.00,8.00,8.00,8.00,8.00,8.00,8.00,8.00,8.00,0.00,8.00,8.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(6,'001204000006','SGU006','PT3',7.50,0.00,0.00,0.00,0.00,0.00,7.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(7,'001204000007','SGU007','PT1',6.50,6.00,5.50,5.00,7.00,7.50,6.50,5.00,5.00,8.00,0.00,0.00,7.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(8,'001204000008','SGU008','PT2',0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,920.00,NULL,NULL,NULL,NULL,NULL,NULL),
-(9,'001204000009','SGU009','PT1',9.50,9.00,9.50,0.00,0.00,0.00,8.00,9.00,10.00,9.00,0.00,9.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(10,'001204000010','SGU010','PT1',5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `xt_diemthixettuyen` VALUES (1,'001204000001','SGU001',8.50,7.00,6.50,0.00,0.00,0.00,7.50,8.00,9.00,8.00,0.00,7.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(2,'001204000002','SGU002',9.00,8.50,9.00,0.00,0.00,0.00,6.00,7.50,7.50,0.00,0.00,0.00,8.50,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(3,'001204000003','SGU003',7.00,0.00,0.00,0.00,8.00,8.50,8.00,6.00,6.00,0.00,0.00,0.00,7.50,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(4,'001204000004','SGU004',0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,850.00,NULL,NULL,NULL,NULL,NULL,NULL),(5,'001204000005','SGU005',8.00,8.00,8.00,8.00,8.00,8.00,8.00,8.00,8.00,8.00,0.00,8.00,8.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(6,'001204000006','SGU006',7.50,0.00,0.00,0.00,0.00,0.00,7.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(7,'001204000007','SGU007',6.50,6.00,5.50,5.00,7.00,7.50,6.50,5.00,5.00,8.00,0.00,0.00,7.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(8,'001204000008','SGU008',0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,920.00,NULL,NULL,NULL,NULL,NULL,NULL),(9,'001204000009','SGU009',9.50,9.00,9.50,0.00,0.00,0.00,8.00,9.00,10.00,9.00,0.00,9.00,0.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),(10,'001204000010','SGU010',5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,5.00,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `xt_diemthixettuyen` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -254,8 +237,8 @@ CREATE TABLE `xt_nguyenvongxettuyen` (
   `diem_xettuyen` decimal(10,5) DEFAULT NULL COMMENT 'đã cộng điểm ưu tiên',
   `nv_ketqua` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
   `nv_keys` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
-  `tt_phuongthuc` varchar(45) DEFAULT NULL,
-  `tt_thm` varchar(45) DEFAULT NULL,
+  `tt_phuongthuc` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tt_thm` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`idnv`),
   UNIQUE KEY `nv_keys_UNIQUE` (`nv_keys`)
 ) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -302,6 +285,10 @@ CREATE TABLE `xt_thisinhxettuyen25` (
 -- Dumping data for table `xt_thisinhxettuyen25`
 --
 
+LOCK TABLES `xt_thisinhxettuyen25` WRITE;
+/*!40000 ALTER TABLE `xt_thisinhxettuyen25` DISABLE KEYS */;
+/*!40000 ALTER TABLE `xt_thisinhxettuyen25` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `xt_tohop_monthi`
@@ -341,9 +328,9 @@ DROP TABLE IF EXISTS `xt_users`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `xt_users` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) NOT NULL,
-  `password` varchar(100) NOT NULL,
-  `role` varchar(20) DEFAULT 'user',
+  `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'user',
   `is_active` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
@@ -369,4 +356,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-19 20:01:42
+-- Dump completed on 2026-05-21 13:38:31

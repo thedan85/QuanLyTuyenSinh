@@ -53,7 +53,7 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
 
     // Khai báo gần 20 trường dữ liệu
     private JTextField txtId, txtSbd;
-    private JComboBox<String> cbCccd, cbPhuongThuc;
+    private JComboBox<String> cbCccd;
     private JTextField txtTo, txtLi, txtHo, txtSi, txtSu, txtDi, txtVa;
     private JTextField txtN1Thi, txtN1Cc, txtCncn, txtCnnn, txtTi, txtKtpl;
     private JTextField txtNl1, txtNk1, txtNk2;
@@ -77,8 +77,6 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
         txtSbd = new JTextField();
         txtSbd.setEditable(false);
         txtSbd.setBackground(new Color(235, 235, 235));
-        cbPhuongThuc = PhuongThucOptions.newCombo();
-
         txtTo = new JTextField();
         txtLi = new JTextField();
         txtHo = new JTextField();
@@ -106,7 +104,7 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
         narrowScoreFields(txtTo, txtLi, txtHo, txtSi, txtSu, txtDi, txtVa,
                 txtN1Thi, txtN1Cc, txtCncn, txtCnnn, txtTi, txtKtpl, txtNl1, txtNk1, txtNk2,
                 txtVsatTo, txtVsatLi, txtVsatHo, txtVsatSi, txtVsatSu, txtVsatDi, txtVsatVa, txtVsatN1);
-        syncInputWidth(txtSbd, cbCccd, cbPhuongThuc);
+        syncInputWidth(txtSbd, cbCccd);
 
         txtId = new JTextField();
         txtId.setVisible(false);
@@ -118,7 +116,6 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
 
         addFormField(formPanel, gbc, 0, 0, "CCCD (*):", cbCccd);
         addFormField(formPanel, gbc, 0, 1, "Số báo danh:", txtSbd);
-        addFormField(formPanel, gbc, 0, 2, "Phương thức (*):", cbPhuongThuc);
         addFormField(formPanel, gbc, 1, 0, "Toán:", txtTo);
         addFormField(formPanel, gbc, 1, 1, "Vật lý:", txtLi);
         addFormField(formPanel, gbc, 1, 2, "Hóa học:", txtHo);
@@ -184,7 +181,7 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
         UiButtons.equalizeButtonsInContainer(buttonPanel);
 
         // --- 3. BẢNG DỮ LIỆU ---
-        String[] columns = { "ID", "CCCD", "SBD", "PT", "Toán", "Lý", "Hóa", "Sinh", "Sử", "Địa", "Văn", "N1_Thi",
+        String[] columns = { "ID", "CCCD", "SBD", "Toán", "Lý", "Hóa", "Sinh", "Sử", "Địa", "Văn", "N1_Thi",
                 "N1_CC", "CNCN", "CNNN", "Tin", "KTPL", "NL1", "NK1", "NK2",
                 "V-TO", "V-LI", "V-HO", "V-SI", "V-SU", "V-DI", "V-VA", "V-N1" };
         tableModel = new DefaultTableModel(columns, 0) {
@@ -294,7 +291,7 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
         if (list != null) {
             for (DiemThi d : list) {
                 tableModel.addRow(new Object[] {
-                        d.getIddiemthi(), d.getCccd(), d.getSobaodanh(), d.getdPhuongthuc(),
+                        d.getIddiemthi(), d.getCccd(), d.getSobaodanh(),
                         d.getDiemToan(), d.getDiemLy(), d.getDiemHoa(), d.getDiemSinh(),
                         d.getDiemSu(), d.getDiemDia(), d.getDiemVan(), d.getN1Thi(), d.getN1Cc(),
                         d.getCncn(), d.getCnnn(), d.getDiemTin(), d.getKtpl(), d.getNl1(), d.getNk1(), d.getNk2(),
@@ -342,7 +339,6 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
         DiemThi d = new DiemThi();
         d.setCccd(getSelectedCccd());
         d.setSobaodanh(txtSbd.getText().trim());
-        d.setdPhuongthuc(PhuongThucOptions.getCode(cbPhuongThuc));
 
         d.setDiemToan(parseDouble(txtTo.getText()));
         d.setDiemLy(parseDouble(txtLi.getText()));
@@ -375,7 +371,6 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
         txtId.setText("");
         cbCccd.setSelectedIndex(0);
         txtSbd.setText("");
-        PhuongThucOptions.select(cbPhuongThuc, PhuongThucOptions.PT1);
         txtTo.setText("");
         txtLi.setText("");
         txtHo.setText("");
@@ -414,31 +409,30 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
                 txtId.setText(getValue(row, 0));
                 selectCccd(getValue(row, 1));
                 txtSbd.setText(getValue(row, 2));
-                PhuongThucOptions.select(cbPhuongThuc, getValue(row, 3));
-                txtTo.setText(getValue(row, 4));
-                txtLi.setText(getValue(row, 5));
-                txtHo.setText(getValue(row, 6));
-                txtSi.setText(getValue(row, 7));
-                txtSu.setText(getValue(row, 8));
-                txtDi.setText(getValue(row, 9));
-                txtVa.setText(getValue(row, 10));
-                txtN1Thi.setText(getValue(row, 11));
-                txtN1Cc.setText(getValue(row, 12));
-                txtCncn.setText(getValue(row, 13));
-                txtCnnn.setText(getValue(row, 14));
-                txtTi.setText(getValue(row, 15));
-                txtKtpl.setText(getValue(row, 16));
-                txtNl1.setText(getValue(row, 17));
-                txtNk1.setText(getValue(row, 18));
-                txtNk2.setText(getValue(row, 19));
-                txtVsatTo.setText(getValue(row, 20));
-                txtVsatLi.setText(getValue(row, 21));
-                txtVsatHo.setText(getValue(row, 22));
-                txtVsatSi.setText(getValue(row, 23));
-                txtVsatSu.setText(getValue(row, 24));
-                txtVsatDi.setText(getValue(row, 25));
-                txtVsatVa.setText(getValue(row, 26));
-                txtVsatN1.setText(getValue(row, 27));
+                txtTo.setText(getValue(row, 3));
+                txtLi.setText(getValue(row, 4));
+                txtHo.setText(getValue(row, 5));
+                txtSi.setText(getValue(row, 6));
+                txtSu.setText(getValue(row, 7));
+                txtDi.setText(getValue(row, 8));
+                txtVa.setText(getValue(row, 9));
+                txtN1Thi.setText(getValue(row, 10));
+                txtN1Cc.setText(getValue(row, 11));
+                txtCncn.setText(getValue(row, 12));
+                txtCnnn.setText(getValue(row, 13));
+                txtTi.setText(getValue(row, 14));
+                txtKtpl.setText(getValue(row, 15));
+                txtNl1.setText(getValue(row, 16));
+                txtNk1.setText(getValue(row, 17));
+                txtNk2.setText(getValue(row, 18));
+                txtVsatTo.setText(getValue(row, 19));
+                txtVsatLi.setText(getValue(row, 20));
+                txtVsatHo.setText(getValue(row, 21));
+                txtVsatSi.setText(getValue(row, 22));
+                txtVsatSu.setText(getValue(row, 23));
+                txtVsatDi.setText(getValue(row, 24));
+                txtVsatVa.setText(getValue(row, 25));
+                txtVsatN1.setText(getValue(row, 26));
                 cbCccd.setEnabled(false);
             }
         });
@@ -547,31 +541,31 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
             boolean isDGNL = false;
             switch (selectedIdx) {
                 case 0:
-                    col = 4;
+                    col = 3;
                     break; // Toán
                 case 1:
-                    col = 5;
+                    col = 4;
                     break; // Lý
                 case 2:
-                    col = 6;
+                    col = 5;
                     break; // Hóa
                 case 3:
-                    col = 7;
+                    col = 6;
                     break; // Sinh
                 case 4:
-                    col = 8;
+                    col = 7;
                     break; // Sử
                 case 5:
-                    col = 9;
+                    col = 8;
                     break; // Địa
                 case 6:
-                    col = 10;
+                    col = 9;
                     break; // Văn
                 case 7:
-                    col = 11;
+                    col = 10;
                     break; // N1_Thi
                 case 8:
-                    col = 17;
+                    col = 16;
                     isDGNL = true;
                     break; // NL1
             }
@@ -676,27 +670,26 @@ public class DiemThiPanel extends JPanel implements RefreshablePanel {
                 DiemThi d = new DiemThi();
                 d.setCccd(cccd);
                 d.setSobaodanh(getSafeString(data, 1));
-                d.setdPhuongthuc(PhuongThucOptions.toCode(getSafeString(data, 2)));
-                d.setDiemToan(getSafeDouble(data, 3));
-                d.setDiemLy(getSafeDouble(data, 4));
-                d.setDiemHoa(getSafeDouble(data, 5));
-                d.setDiemSinh(getSafeDouble(data, 6));
-                d.setDiemSu(getSafeDouble(data, 7));
-                d.setDiemDia(getSafeDouble(data, 8));
-                d.setDiemVan(getSafeDouble(data, 9));
-                d.setN1Thi(getSafeDouble(data, 10));
-                d.setN1Cc(getSafeDouble(data, 11));
-                d.setCncn(getSafeDouble(data, 12));
-                d.setCnnn(getSafeDouble(data, 13));
-                d.setDiemTin(getSafeDouble(data, 14));
-                d.setKtpl(getSafeDouble(data, 15));
-                d.setNl1(getSafeDouble(data, 16));
-                d.setNk1(getSafeDouble(data, 17));
-                d.setNk2(getSafeDouble(data, 18));
-                d.setNk3(getSafeDouble(data, 19));
-                d.setNk4(getSafeDouble(data, 20));
-                d.setNk5(getSafeDouble(data, 21));
-                d.setNk6(getSafeDouble(data, 22));
+                d.setDiemToan(getSafeDouble(data, 2));
+                d.setDiemLy(getSafeDouble(data, 3));
+                d.setDiemHoa(getSafeDouble(data, 4));
+                d.setDiemSinh(getSafeDouble(data, 5));
+                d.setDiemSu(getSafeDouble(data, 6));
+                d.setDiemDia(getSafeDouble(data, 7));
+                d.setDiemVan(getSafeDouble(data, 8));
+                d.setN1Thi(getSafeDouble(data, 9));
+                d.setN1Cc(getSafeDouble(data, 10));
+                d.setCncn(getSafeDouble(data, 11));
+                d.setCnnn(getSafeDouble(data, 12));
+                d.setDiemTin(getSafeDouble(data, 13));
+                d.setKtpl(getSafeDouble(data, 14));
+                d.setNl1(getSafeDouble(data, 15));
+                d.setNk1(getSafeDouble(data, 16));
+                d.setNk2(getSafeDouble(data, 17));
+                d.setNk3(getSafeDouble(data, 18));
+                d.setNk4(getSafeDouble(data, 19));
+                d.setNk5(getSafeDouble(data, 20));
+                d.setNk6(getSafeDouble(data, 21));
 
                 if (!thiSinhDAO.isCccdExists(d.getCccd())) {
                     invalid++;

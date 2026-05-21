@@ -54,8 +54,6 @@ public class ThiSinhDetailDialog extends JDialog {
         } else {
             for (DiemThi d : dsDiem) {
                 sb.append("--------------------------------------------------\n");
-                sb.append("Phương thức xét: ").append(d.getdPhuongthuc()).append("\n\n");
-                
                 sb.append("1. Điểm thi THPT:\n");
                 sb.append(String.format(" - Toán: %s | Lý: %s | Hóa: %s | Sinh: %s\n", d.getDiemToan(), d.getDiemLy(), d.getDiemHoa(), d.getDiemSinh()));
                 sb.append(String.format(" - Văn: %s | Sử: %s | Địa: %s | GDCD: %s\n", d.getDiemVan(), d.getDiemSu(), d.getDiemDia(), d.getKtpl()));

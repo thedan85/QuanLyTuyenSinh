@@ -4,6 +4,7 @@ import com.example.dao.NganhDAO;
 import com.example.dao.NguyenVongDAO;
 import com.example.dto.TrungTuyenRow;
 import com.example.entity.Nganh;
+import com.example.report.PdfTableExporter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -27,6 +28,7 @@ public class TrungTuyenTheoNganhDialog extends JDialog {
     private final NguyenVongDAO nguyenVongDAO = new NguyenVongDAO();
     private JComboBox<String> cbNganh;
     private JButton btnRefresh;
+    private JButton btnXuatPdf;
     private DefaultTableModel tableModel;
     private JTable table;
     private JScrollPane tableScroll;
@@ -44,9 +46,12 @@ public class TrungTuyenTheoNganhDialog extends JDialog {
         cbNganh.setPreferredSize(new Dimension(320, 36));
         topPanel.add(cbNganh);
         btnRefresh = new JButton("Làm mới");
+        btnXuatPdf = new JButton("Xuất PDF");
         topPanel.add(btnRefresh);
+        topPanel.add(btnXuatPdf);
         UiButtons.stylePrimary(btnRefresh);
-        UiButtons.equalizeHeightsOnly(btnRefresh);
+        UiButtons.styleSecondary(btnXuatPdf);
+        UiButtons.equalizeHeightsOnly(btnRefresh, btnXuatPdf);
         add(topPanel, BorderLayout.NORTH);
 
         tableModel = new DefaultTableModel(COLUMNS, 0) {
@@ -85,6 +90,7 @@ public class TrungTuyenTheoNganhDialog extends JDialog {
 
         loadNganhCombo();
         btnRefresh.addActionListener(e -> refreshTable());
+        btnXuatPdf.addActionListener(e -> xuatPdf());
         cbNganh.addActionListener(e -> refreshTable());
         btnClose.addActionListener(e -> dispose());
 
@@ -154,5 +160,13 @@ public class TrungTuyenTheoNganhDialog extends JDialog {
             return String.valueOf(v.longValue());
         }
         return String.format("%.2f", v);
+    }
+
+    private void xuatPdf() {
+        Object sel = cbNganh.getSelectedItem();
+        String subtitle = (sel == null || TAT_CA.equals(sel.toString()))
+                ? "Phạm vi: tất cả ngành"
+                : "Phạm vi: " + sel.toString();
+        PdfTableExporter.exportDanhSachTrungTuyen(this, tableModel, subtitle);
     }
 }

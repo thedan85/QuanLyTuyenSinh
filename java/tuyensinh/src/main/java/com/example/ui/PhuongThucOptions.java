@@ -3,7 +3,7 @@ package com.example.ui;
 import javax.swing.JComboBox;
 
 /**
- * Phương thức xét tuyển trên nguyện vọng / điểm thi / điểm cộng: PT1, PT2, PT3.
+ * Phương thức xét tuyển trên nguyện vọng / điểm cộng: PT1, PT2, PT3.
  */
 public final class PhuongThucOptions {
 

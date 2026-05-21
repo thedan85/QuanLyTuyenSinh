@@ -266,10 +266,12 @@ public class NguyenVongDAO {
     public List<TrungTuyenRow> listTrungTuyenByNganh(String maNganh) {
         String ma = maNganh == null ? "" : maNganh.trim();
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // LEFT JOIN ThiSinh: vẫn hiện NV trúng khi chưa có bản ghi thí sinh (vd. DB mẫu chỉ có NV/điểm).
             StringBuilder hql = new StringBuilder(
-                    "SELECT nv, ts, ng FROM NguyenVong nv, ThiSinh ts, Nganh ng " +
-                    "WHERE nv.tsCccd = ts.cccd AND nv.maNganh = ng.manganh " +
-                    "AND nv.ketQua LIKE :trung ");
+                    "SELECT nv, ts, ng FROM NguyenVong nv " +
+                    "LEFT JOIN ThiSinh ts ON nv.tsCccd = ts.cccd " +
+                    "JOIN Nganh ng ON nv.maNganh = ng.manganh " +
+                    "WHERE nv.ketQua LIKE :trung ");
             if (!ma.isEmpty()) {
                 hql.append("AND nv.maNganh = :maNganh ");
             }
@@ -292,8 +294,8 @@ public class NguyenVongDAO {
                 Nganh ng = (Nganh) o[2];
                 TrungTuyenRow row = new TrungTuyenRow();
                 row.setCccd(nv.getTsCccd());
-                row.setHo(ts.getHo() != null ? ts.getHo() : "");
-                row.setTen(ts.getTen() != null ? ts.getTen() : "");
+                row.setHo(ts != null && ts.getHo() != null ? ts.getHo() : "");
+                row.setTen(ts != null && ts.getTen() != null ? ts.getTen() : "");
                 row.setThuTuNv(nv.getThuTuNV());
                 row.setMaNganh(nv.getMaNganh());
                 row.setTenNganh(ng.getTennganh() != null ? ng.getTennganh() : "");

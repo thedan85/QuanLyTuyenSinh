@@ -20,9 +20,6 @@ public class DiemThi {
     @Column(name = "sobaodanh")
     private String sobaodanh;
 
-    @Column(name = "d_phuongthuc")
-    private String dPhuongthuc;
-
     @Column(name = "`TO`")
     private Double diemToan;
 
@@ -93,14 +90,6 @@ public class DiemThi {
 
     public void setSobaodanh(String sobaodanh) {
         this.sobaodanh = sobaodanh;
-    }
-
-    public String getdPhuongthuc() {
-        return dPhuongthuc;
-    }
-
-    public void setdPhuongthuc(String dPhuongthuc) {
-        this.dPhuongthuc = dPhuongthuc;
     }
 
     public Double getDiemToan() {

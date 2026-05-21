@@ -15,9 +15,6 @@ public class DiemThi {
     @Column(name = "sobaodanh")
     private String sobaodanh;
 
-    @Column(name = "d_phuongthuc")
-    private String dPhuongthuc;
-
     @Column(name = "`TO`") private Double diemToan;
     @Column(name = "LI") private Double diemLy;
     @Column(name = "HO") private Double diemHoa;
@@ -58,8 +55,6 @@ public class DiemThi {
     public void setCccd(String cccd) { this.cccd = cccd; }
     public String getSobaodanh() { return sobaodanh; }
     public void setSobaodanh(String sobaodanh) { this.sobaodanh = sobaodanh; }
-    public String getdPhuongthuc() { return dPhuongthuc; }
-    public void setdPhuongthuc(String dPhuongthuc) { this.dPhuongthuc = dPhuongthuc; }
     
     public Double getDiemToan() { return diemToan; }
     public void setDiemToan(Double diemToan) { this.diemToan = diemToan; }

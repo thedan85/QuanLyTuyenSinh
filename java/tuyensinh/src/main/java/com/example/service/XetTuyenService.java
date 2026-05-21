@@ -123,7 +123,7 @@ public class XetTuyenService {
     }
 
     /**
-     * PT trên nguyện vọng: PT1/THPT, PT2/ĐGNL (NL1), PT3/VSAT (VSAT_* từng môn).
+     * PT trên nguyện vọng: PT1/THPT (gồm NK1–NK6 thang 10), PT2/ĐGNL (NL1), PT3/VSAT (VSAT_*; NK dùng điểm NK thang 10 nếu không có bậc VSAT).
      * Bảng xt_bangquydoi dùng d_phuongthuc = DGNL hoặc VSAT.
      */
     private double tinhDiemThxt(Session session, DiemThi dt,
@@ -212,6 +212,10 @@ public class XetTuyenService {
             double n1CcGoc = dt.getN1Cc() != null ? dt.getN1Cc() : 0.0;
             double n1CcQuyDoi = (n1CcGoc > 0 && n1CcGoc <= 9.0) ? quyDoiIelts(n1CcGoc) : n1CcGoc;
             return Math.max(n1Thi, n1CcQuyDoi);
+        }
+        // NK: không có bảng VSAT cho NK → điểm năng khiếu thang 10 (cùng cột NK1–NK6 như PT1)
+        if (isMaMonNk(mon) && dt != null) {
+            return getDiemMon(dt, mon);
         }
         return 0.0;
     }
@@ -405,14 +409,52 @@ public class XetTuyenService {
                 return dt.getDiemTin() != null ? dt.getDiemTin() : 0.0;
             case "KTPL":
                 return dt.getKtpl() != null ? dt.getKtpl() : 0.0;
+            case "NK1":
+                return diemNk(dt.getNk1());
+            case "NK2":
+                return diemNk(dt.getNk2());
+            case "NK3":
+                return diemNk(dt.getNk3());
+            case "NK4":
+                return diemNk(dt.getNk4());
+            case "NK5":
+                return diemNk(dt.getNk5());
+            case "NK6":
+                return diemNk(dt.getNk6());
             default:
                 return 0.0;
         }
     }
 
+    private static boolean isMaMonNk(String maMon) {
+        if (maMon == null) {
+            return false;
+        }
+        switch (maMon.trim().toUpperCase()) {
+            case "NK1":
+            case "NK2":
+            case "NK3":
+            case "NK4":
+            case "NK5":
+            case "NK6":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static double diemNk(Double v) {
+        return (v != null && v > 0) ? v : 0.0;
+    }
+
     /**
-     * Xét trúng tuyển theo vòng NV (mô hình A): vòng 1 = mọi NV1, vòng 2 = NV2 (thí sinh chưa trúng), ...
-     * Trong mỗi ngành + vòng: điểm cao trước; tôn chỉ tiêu tổng + chỉ tiêu PT (sl_*).
+     * Xét trúng tuyển theo mô hình Bộ: duyệt theo từng ngành, lọc ảo toàn quốc theo {@code nv_tt}.
+     * <ol>
+     *   <li>Gom mọi NV vào từng {@code ma_nganh} (không phân biệt NV1/NV2…).</li>
+     *   <li>Sắp điểm xét tuyển giảm dần, lấp chỉ tiêu → danh sách đủ điều kiện đỗ (tạm).</li>
+     *   <li>Lọc ảo: thí sinh đỗ nhiều ngành chỉ giữ ngành có {@code nv_tt} nhỏ nhất; ngành khác bổ sung người kế tiếp.</li>
+     *   <li>Ghi {@code TRÚNG TUYỂN} cho NV được giữ; còn lại {@code Rớt}.</li>
+     * </ol>
      */
     private void xetTrungTuyen(Session session) {
         session.createQuery("UPDATE NguyenVong SET ketQua = 'Rớt'").executeUpdate();
@@ -423,74 +465,50 @@ public class XetTuyenService {
             return;
         }
 
-        int maxThuTu = 0;
-        for (NguyenVong nv : allNv) {
-            if (nv.getThuTuNV() != null && nv.getThuTuNV() > maxThuTu) {
-                maxThuTu = nv.getThuTuNV();
-            }
-        }
-        if (maxThuTu <= 0) {
-            maxThuTu = 3;
+        Map<String, TrangThaiNganh> trangThaiTheoNganh = taoTrangThaiTheoNganh(allNv, nganhByMa);
+        if (trangThaiTheoNganh.isEmpty()) {
+            return;
         }
 
-        Set<String> cccdDaTrung = new HashSet<>();
-        Map<String, ChiTieuBoDem> boDemByNganh = new HashMap<>();
+        // Bước 1–3: mỗi ngành lấp danh sách đủ điều kiện đỗ (có thể trùng CCCD giữa các ngành).
+        for (TrangThaiNganh tt : trangThaiTheoNganh.values()) {
+            boSungDenDuChiTieu(tt, trangThaiTheoNganh, false);
+        }
+
+        // Bước 4: lọc ảo toàn quốc + bổ sung chỗ trống cho đến khi ổn định.
+        final int maxVongLoc = 500;
+        for (int i = 0; i < maxVongLoc; i++) {
+            boolean coLoai = locAoToanQuoc(trangThaiTheoNganh);
+            boolean coBoSung = false;
+            for (TrangThaiNganh tt : trangThaiTheoNganh.values()) {
+                int truoc = tt.duDieuKienDo.size();
+                boSungDenDuChiTieu(tt, trangThaiTheoNganh, true);
+                if (tt.duDieuKienDo.size() != truoc) {
+                    coBoSung = true;
+                }
+            }
+            if (!coLoai && !coBoSung) {
+                break;
+            }
+        }
+
+        Set<Integer> idTrung = new HashSet<>();
         Map<String, Double> diemChuanMinByNganh = new HashMap<>();
-
-        for (int vong = 1; vong <= maxThuTu; vong++) {
-            Map<String, List<NguyenVong>> theoNganh = new HashMap<>();
-            for (NguyenVong nv : allNv) {
-                if (nv.getThuTuNV() == null || nv.getThuTuNV() != vong) {
-                    continue;
+        for (TrangThaiNganh tt : trangThaiTheoNganh.values()) {
+            for (NguyenVong nv : tt.duDieuKienDo) {
+                idTrung.add(nv.getIdnv());
+                double dx = diemXt(nv);
+                Double curMin = diemChuanMinByNganh.get(tt.maNganh);
+                if (curMin == null || dx < curMin) {
+                    diemChuanMinByNganh.put(tt.maNganh, dx);
                 }
-                if (nv.getTsCccd() == null || cccdDaTrung.contains(nv.getTsCccd())) {
-                    continue;
-                }
-                if (nv.getMaNganh() == null || nv.getMaNganh().trim().isEmpty()) {
-                    continue;
-                }
-                theoNganh.computeIfAbsent(nv.getMaNganh().trim(), k -> new ArrayList<>()).add(nv);
             }
+        }
 
-            for (Map.Entry<String, List<NguyenVong>> entry : theoNganh.entrySet()) {
-                String maNganh = entry.getKey();
-                Nganh nganh = nganhByMa.get(maNganh);
-                if (nganh == null || nganh.getnChitieu() == null || nganh.getnChitieu() <= 0) {
-                    continue;
-                }
-
-                List<NguyenVong> candidates = entry.getValue();
-                candidates.sort((a, b) -> Double.compare(diemXt(b), diemXt(a)));
-
-                ChiTieuBoDem dem = boDemByNganh.computeIfAbsent(maNganh, k -> new ChiTieuBoDem());
-
-                for (NguyenVong nv : candidates) {
-                    if (cccdDaTrung.contains(nv.getTsCccd())) {
-                        continue;
-                    }
-                    if (!duDiemSan(nv, nganh)) {
-                        continue;
-                    }
-
-                    String loaiPt = resolveLoaiXetTuyen(nv.getPhuongThuc());
-                    if (!nganhCoNhanPt(nganh, loaiPt)) {
-                        continue;
-                    }
-                    if (!dem.conCho(nganh, loaiPt)) {
-                        continue;
-                    }
-
-                    nv.setKetQua("TRÚNG TUYỂN");
-                    session.update(nv);
-                    cccdDaTrung.add(nv.getTsCccd());
-                    dem.tang(loaiPt);
-
-                    double dx = diemXt(nv);
-                    Double curMin = diemChuanMinByNganh.get(maNganh);
-                    if (curMin == null || dx < curMin) {
-                        diemChuanMinByNganh.put(maNganh, dx);
-                    }
-                }
+        for (NguyenVong nv : allNv) {
+            if (idTrung.contains(nv.getIdnv())) {
+                nv.setKetQua("TRÚNG TUYỂN");
+                session.update(nv);
             }
         }
 
@@ -501,6 +519,165 @@ public class XetTuyenService {
                 session.update(nganh);
             }
         }
+    }
+
+    private static Map<String, TrangThaiNganh> taoTrangThaiTheoNganh(List<NguyenVong> allNv,
+            Map<String, Nganh> nganhByMa) {
+        Map<String, List<NguyenVong>> poolRaw = new HashMap<>();
+        for (NguyenVong nv : allNv) {
+            if (nv.getMaNganh() == null || nv.getMaNganh().trim().isEmpty()) {
+                continue;
+            }
+            if (nv.getTsCccd() == null || nv.getTsCccd().trim().isEmpty()) {
+                continue;
+            }
+            poolRaw.computeIfAbsent(nv.getMaNganh().trim(), k -> new ArrayList<>()).add(nv);
+        }
+
+        Map<String, TrangThaiNganh> result = new HashMap<>();
+        for (Map.Entry<String, List<NguyenVong>> e : poolRaw.entrySet()) {
+            Nganh nganh = nganhByMa.get(e.getKey());
+            if (nganh == null || nganh.getnChitieu() == null || nganh.getnChitieu() <= 0) {
+                continue;
+            }
+            result.put(e.getKey(), new TrangThaiNganh(e.getKey(), nganh, e.getValue()));
+        }
+        return result;
+    }
+
+    /**
+     * Lấp chỉ tiêu từ pool đã sort. {@code locAo=true}: không thêm CCCD đã nằm trong danh sách đỗ ngành khác.
+     */
+    private static void boSungDenDuChiTieu(TrangThaiNganh tt, Map<String, TrangThaiNganh> trangThaiTheoNganh,
+            boolean locAo) {
+        tt.dongBoDem();
+        for (NguyenVong nv : tt.sortedPool) {
+            if (!tt.dem.conCho(tt.nganh, resolveLoaiXetTuyen(nv.getPhuongThuc()))) {
+                continue;
+            }
+            if (daCoCccdTrongDanhSach(tt, nv.getTsCccd())) {
+                continue;
+            }
+            if (locAo && daCoCccdTrongNganhKhac(trangThaiTheoNganh, tt.maNganh, nv.getTsCccd())) {
+                continue;
+            }
+            if (!duDiemSan(nv, tt.nganh)) {
+                continue;
+            }
+            String loaiPt = resolveLoaiXetTuyen(nv.getPhuongThuc());
+            if (!nganhCoNhanPt(tt.nganh, loaiPt)) {
+                continue;
+            }
+            tt.duDieuKienDo.add(nv);
+            tt.dem.tang(loaiPt);
+        }
+    }
+
+    /** Lọc ảo: CCCD đỗ ≥2 ngành → giữ NV có {@code nv_tt} nhỏ nhất, gỡ khỏi các ngành còn lại. */
+    private static boolean locAoToanQuoc(Map<String, TrangThaiNganh> trangThaiTheoNganh) {
+        Map<String, List<NguyenVong>> theoCccd = new HashMap<>();
+        for (TrangThaiNganh tt : trangThaiTheoNganh.values()) {
+            for (NguyenVong nv : tt.duDieuKienDo) {
+                theoCccd.computeIfAbsent(nv.getTsCccd(), k -> new ArrayList<>()).add(nv);
+            }
+        }
+
+        boolean coThayDoi = false;
+        for (Map.Entry<String, List<NguyenVong>> e : theoCccd.entrySet()) {
+            if (e.getValue().size() < 2) {
+                continue;
+            }
+            NguyenVong giu = chonTheoUuTienNv(e.getValue());
+            String maGiu = giu.getMaNganh() != null ? giu.getMaNganh().trim() : "";
+            for (NguyenVong nv : e.getValue()) {
+                String maNv = nv.getMaNganh() != null ? nv.getMaNganh().trim() : "";
+                if (maNv.equals(maGiu) && nv.getIdnv() == giu.getIdnv()) {
+                    continue;
+                }
+                TrangThaiNganh tt = trangThaiTheoNganh.get(maNv);
+                if (tt != null && tt.duDieuKienDo.remove(nv)) {
+                    coThayDoi = true;
+                }
+            }
+        }
+        return coThayDoi;
+    }
+
+    /** Ưu tiên {@code nv_tt} nhỏ nhất; hòa thì điểm XT cao hơn. */
+    private static NguyenVong chonTheoUuTienNv(List<NguyenVong> danhSach) {
+        NguyenVong best = danhSach.get(0);
+        for (int i = 1; i < danhSach.size(); i++) {
+            NguyenVong cand = danhSach.get(i);
+            int ttBest = thuTuNvOrMax(best);
+            int ttCand = thuTuNvOrMax(cand);
+            if (ttCand < ttBest) {
+                best = cand;
+            } else if (ttCand == ttBest && diemXt(cand) > diemXt(best)) {
+                best = cand;
+            }
+        }
+        return best;
+    }
+
+    private static int thuTuNvOrMax(NguyenVong nv) {
+        return nv.getThuTuNV() != null && nv.getThuTuNV() > 0 ? nv.getThuTuNV() : Integer.MAX_VALUE;
+    }
+
+    private static boolean daCoCccdTrongDanhSach(TrangThaiNganh tt, String cccd) {
+        for (NguyenVong nv : tt.duDieuKienDo) {
+            if (cccd.equals(nv.getTsCccd())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean daCoCccdTrongNganhKhac(Map<String, TrangThaiNganh> trangThaiTheoNganh,
+            String maNganhHienTai, String cccd) {
+        for (Map.Entry<String, TrangThaiNganh> e : trangThaiTheoNganh.entrySet()) {
+            if (e.getKey().equals(maNganhHienTai)) {
+                continue;
+            }
+            if (daCoCccdTrongDanhSach(e.getValue(), cccd)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final class TrangThaiNganh {
+        final String maNganh;
+        final Nganh nganh;
+        final List<NguyenVong> sortedPool;
+        final List<NguyenVong> duDieuKienDo = new ArrayList<>();
+        ChiTieuBoDem dem = new ChiTieuBoDem();
+
+        TrangThaiNganh(String maNganh, Nganh nganh, List<NguyenVong> pool) {
+            this.maNganh = maNganh;
+            this.nganh = nganh;
+            this.sortedPool = new ArrayList<>(pool);
+            sapXepCanhTranh(this.sortedPool);
+        }
+
+        void dongBoDem() {
+            dem = new ChiTieuBoDem();
+            for (NguyenVong nv : duDieuKienDo) {
+                dem.tang(resolveLoaiXetTuyen(nv.getPhuongThuc()));
+            }
+        }
+    }
+
+    /** Sắp xếp điểm XT giảm dần; hòa điểm thì CCCD nhỏ hơn. */
+    private static void sapXepCanhTranh(List<NguyenVong> candidates) {
+        candidates.sort((a, b) -> {
+            int byDiem = Double.compare(diemXt(b), diemXt(a));
+            if (byDiem != 0) {
+                return byDiem;
+            }
+            String ca = a.getTsCccd() != null ? a.getTsCccd() : "";
+            String cb = b.getTsCccd() != null ? b.getTsCccd() : "";
+            return ca.compareTo(cb);
+        });
     }
 
     private static double diemXt(NguyenVong nv) {

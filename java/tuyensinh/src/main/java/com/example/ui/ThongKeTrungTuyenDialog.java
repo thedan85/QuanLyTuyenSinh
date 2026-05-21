@@ -2,12 +2,14 @@ package com.example.ui;
 
 import com.example.dao.NguyenVongDAO;
 import com.example.dto.ThongKeTrungTuyenRow;
+import com.example.report.PdfTableExporter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,9 +25,11 @@ public class ThongKeTrungTuyenDialog extends JDialog {
 
     private final NguyenVongDAO nguyenVongDAO = new NguyenVongDAO();
     private JButton btnRefresh;
+    private JButton btnXuatPdf;
     private DefaultTableModel tableModel;
     private JTable table;
     private JScrollPane tableScroll;
+    private List<ThongKeTrungTuyenRow> lastRows = new ArrayList<>();
 
     public ThongKeTrungTuyenDialog(Window owner) {
         super(owner, "Thống kê trúng tuyển theo ngành", ModalityType.APPLICATION_MODAL);
@@ -36,9 +40,12 @@ public class ThongKeTrungTuyenDialog extends JDialog {
 
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         btnRefresh = new JButton("Làm mới");
+        btnXuatPdf = new JButton("Xuất PDF");
         topPanel.add(btnRefresh);
+        topPanel.add(btnXuatPdf);
         UiButtons.stylePrimary(btnRefresh);
-        UiButtons.equalizeHeightsOnly(btnRefresh);
+        UiButtons.styleSecondary(btnXuatPdf);
+        UiButtons.equalizeHeightsOnly(btnRefresh, btnXuatPdf);
         add(topPanel, BorderLayout.NORTH);
 
         tableModel = new DefaultTableModel(COLUMNS, 0) {
@@ -70,6 +77,7 @@ public class ThongKeTrungTuyenDialog extends JDialog {
         add(southPanel, BorderLayout.SOUTH);
 
         btnRefresh.addActionListener(e -> refreshTable());
+        btnXuatPdf.addActionListener(e -> xuatPdf());
         btnClose.addActionListener(e -> dispose());
 
         refreshTable();
@@ -84,6 +92,7 @@ public class ThongKeTrungTuyenDialog extends JDialog {
     public void refreshTable() {
         tableModel.setRowCount(0);
         List<ThongKeTrungTuyenRow> rows = nguyenVongDAO.thongKeTrungTuyenTheoNganh();
+        lastRows = rows != null ? new ArrayList<>(rows) : new ArrayList<>();
         if (rows == null) {
             return;
         }
@@ -102,5 +111,9 @@ public class ThongKeTrungTuyenDialog extends JDialog {
             });
         }
         UiTableColumns.refresh(table);
+    }
+
+    private void xuatPdf() {
+        PdfTableExporter.exportThongKeTrungTuyen(this, lastRows);
     }
 }
